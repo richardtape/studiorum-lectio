@@ -37,6 +37,8 @@
 			// We have a filter for the WYSIWYG add-on for gForms allowing us to modify the type of editor
 			add_filter( 'gforms_wysiwyg_wp_editor_args', array( $this, 'gforms_wysiwyg_wp_editor_args__adjustWPEditor' ), 10, 2 );
 
+			//
+
 		}/* __construct() */
 
 

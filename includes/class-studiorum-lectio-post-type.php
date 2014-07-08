@@ -19,7 +19,8 @@
 
 		var $name 			= 'submissions';
 		var $singularName 	= 'submission';
-		var $postType 		= 'lectio-submission';
+		var $slug 			= 'lectio-submission';
+		var $menuName 		= 'Submissions';
 
 		/**
 		 * Actions and filters
@@ -70,7 +71,7 @@
 			$labels = array(
 				'name'					=> _x( $this->name, 'post type general name', 'studiorum-lectio' ),
 				'singular_name'			=> _x( $this->singularName, 'post type singular name', 'studiorum-lectio' ),
-				'menu_name'				=> _x( $this->name, 'admin menu', 'studiorum-lectio' ),
+				'menu_name'				=> _x( $this->menuName, 'admin menu', 'studiorum-lectio' ),
 				'name_admin_bar'		=> _x( $this->singularName, 'add new on admin bar', 'studiorum-lectio' ),
 				'add_new'				=> _x( 'Add New', $this->singularName, 'studiorum-lectio' ),
 				'add_new_item'			=> __( 'Add New ' . $this->singularName, 'studiorum-lectio' ),
@@ -99,7 +100,7 @@
 				'supports'				=> array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' )
 			);
 
-			register_post_type( $this->postType, $args );
+			register_post_type( $this->slug, $args );
 
 		}/* registerAssignmentSubmissionPostType() */
 
