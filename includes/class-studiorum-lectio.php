@@ -54,6 +54,7 @@
 
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-post-type.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-taxonomies.php' );
+			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/libraries/Tax-meta-class/Tax-meta-class.php' );
 
 		}/* after_setup_theme__includes() */
 

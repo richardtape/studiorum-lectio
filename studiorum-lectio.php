@@ -37,6 +37,14 @@
 		define( 'LECTIO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 	}
 
+	/**
+	 * Load lectio
+	 *
+	 * @since 0.1
+	 *
+	 * @param null
+	 * @return null
+	 */
 	function studiorum_after_includes__loadLectio()
 	{
 
