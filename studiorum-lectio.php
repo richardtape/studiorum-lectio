@@ -6,7 +6,7 @@
 	 * Plugin URI:  #
 	 * Author:      UBC, CTLT, Richard Tape
 	 * Author URI:  http://ubc.ca/
-	 * Text Domain: lectio
+	 * Text Domain: studiorum-lectio
 	 * License:     GPL v2 or later
 	 * Domain Path: languages
 	 *

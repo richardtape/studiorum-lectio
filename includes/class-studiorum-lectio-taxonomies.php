@@ -153,7 +153,7 @@
 			// Register the meta box
 			$subCatMeta = new Tax_Meta_Class( $config );
 
-			// Add fields to it
+			// Add fields to it : https://raw.githubusercontent.com/bainternet/Tax-Meta-Class/master/class-usage-demo.php
 			// $subCatMeta->addText( 
 			// 	$prefix . 'text_field_id',
 			// 	array( 
