@@ -45,6 +45,10 @@
 			// Add a 'private' option to the gForms post fields so only authors of the post and educators & above can view the post
 			add_filter( 'gform_post_status_options', array( $this, 'gform_post_status_options__addPrivateToDropdown' ) );
 
+			// Remove 'private' and 'protected' from titles
+			add_filter( 'private_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
+			add_filter( 'protected_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
+
 		}/* __construct() */
 
 
@@ -221,6 +225,23 @@
 			return $postStatuses;
 
 		}/* gform_post_status_options__addPrivateToDropdown() */
+
+
+		/**
+		 * Remove the words 'Private' and 'Protected' from titles
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $content the title content
+		 * @return string The modified title
+		 */
+
+		public function title_format__removePrivatePublicFromTitle( $content )
+		{
+
+			return '%s';
+
+		}/* title_format__removePrivatePublicFromTitle() */
 
 
 	}/* class Studiorum_Lectio */
