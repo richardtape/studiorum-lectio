@@ -49,6 +49,12 @@
 			add_filter( 'private_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
 			add_filter( 'protected_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
 
+			// Prevent Edit/New links in admin bar for student
+			add_action( 'wp_before_admin_bar_render', array( $this, 'wp_before_admin_bar_render__removeAdminBarLinksForStudents' ) );
+
+			// Add our options to the options panel
+			add_action( 'studiorum_settings_setup_start', array( $this, 'studiorum_settings_setup_start__addFilters' ) );
+
 		}/* __construct() */
 
 
@@ -64,9 +70,12 @@
 		public static function after_setup_theme__includes()
 		{
 
+			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-utils.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-post-type.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-taxonomies.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/libraries/Tax-meta-class/Tax-meta-class.php' );
+			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/admin/class-studiorum-lectio-educator-dashboard.php' );
+			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/gravity-forms-hooks/class-studiorum-lectio-gravity-forms-hooks.php' );
 
 		}/* after_setup_theme__includes() */
 
@@ -242,6 +251,154 @@
 			return '%s';
 
 		}/* title_format__removePrivatePublicFromTitle() */
+
+
+		/**
+		 * Students don't need to see links such as edit or add items in the admin bar
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return null
+		 */
+
+		public function wp_before_admin_bar_render__removeAdminBarLinksForStudents()
+		{
+
+			global $wp_admin_bar;
+
+			$userID = get_current_user_id();
+
+			$isStudent = Studiorum_Utils::usersRoleIs( 'studiorum_student' );
+
+			if( !$isStudent ){
+				return;
+			}
+
+			$wp_admin_bar->remove_menu( 'comments' );
+			$wp_admin_bar->remove_menu('new-content');
+			$wp_admin_bar->remove_menu('edit');
+
+		}/* wp_before_admin_bar_render__removeAdminBarLinksForStudents() */
+
+
+		/**
+		 * Add our filters to add our options to the main studiorum settings panel
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return null
+		 */
+
+		public function studiorum_settings_setup_start__addFilters()
+		{
+
+			// Add the tab
+			add_filter( 'studiorum_settings_in_page_tabs', array( $this, 'studiorum_settings_in_page_tabs__addLectioSettingsTab' ) );
+
+			// Add the settings section
+			add_filter( 'studiorum_settings_settings_sections', array( $this, 'studiorum_settings_settings_sections__addLectioSettingsSection' ) );
+
+			// Add the fields to the new section
+			add_filter( 'studiorum_settings_settings_fields', array( $this, 'studiorum_settings_settings_fields__addLectioSettingsFields' ) );
+
+		}/* studiorum_settings_setup_start__addFilters() */
+
+
+		/**
+		 * Add the lectio tab to the Studiorum settings panel
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $studiorumSettingsTabs Existing settings tabs
+		 * @return array $studiorumSettingsTabs Modified settings tabs
+		 */
+
+		public function studiorum_settings_in_page_tabs__addLectioSettingsTab( $studiorumSettingsTabs )
+		{
+
+			if( !$studiorumSettingsTabs || !is_array( $studiorumSettingsTabs ) ){
+				$studiorumSettingsTabs = array();
+			}
+
+			$studiorumSettingsTabs[] = array(
+				'tab_slug'	=>	'lectio',
+				'title'		=>	__( 'Lectio', 'studiorum-lectio' )
+			);
+
+			return $studiorumSettingsTabs;
+
+		}/* studiorum_settings_in_page_tabs__addLectioSettingsTab */
+
+
+		/**
+		 * Add the lectio settings section to the Studiorum settings panel
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $settingsSections existing settings sections
+		 * @return array $settingsSections modified settings sections
+		 */
+
+		public function studiorum_settings_settings_sections__addLectioSettingsSection( $settingsSections )
+		{
+
+			if( !$settingsSections || !is_array( $settingsSections ) ){
+				$settingsSections = array();
+			}
+
+			$settingsSections[] = array(
+				'section_id'	=>	'lectio_options',
+				'tab_slug'		=>	'lectio',
+				'order'			=> 	1,
+				'title'			=>	__( 'Lectio Settings', 'studiorum-lectio' ),
+				'description'	=>	__( 'Lectio adds the ability for students to submit content through your WordPress-powered website. These settings define the basic functionality for Lectio.', 'studiorum-lectio' ),
+			);
+
+			return $settingsSections;
+
+		}/* studiorum_settings_settings_sections__addLectioSettingsSection */
+
+
+		/**
+		 * Add the fields to the Studiorum settings panel
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $settingsFields existing settings fields
+		 * @return array $settingsFields modified settings fields
+		 */
+
+		public function studiorum_settings_settings_fields__addLectioSettingsFields( $settingsFields )
+		{
+
+			if( !$settingsFields || !is_array( $settingsFields ) ){
+				$settingsFields = array();
+			}
+
+			$settingsFields[] = array(	// Single Drop-down List
+				'field_id'		=>	'select',
+				'section_id'	=>	'lectio_options',
+				'title'			=>	__( 'Dropdown List', 'studiorum' ),
+				'type'			=>	'select',
+				'help'			=>	__( 'This is the <em>select</em> field type.', 'studiorum' ),
+				'default'		=>	2,	// the index key of the label array below which yields 'Yellow'.
+				'label'			=>	array( 
+					0	=>	'Red',		
+					1	=>	'Blue',
+					2	=>	'Yellow',
+					3	=>	'Orange',
+				),
+				'description'	=>	__( 'The key of the array of the <code>label</code> element serves as the value of the option tag which will be sent to the form and saved in the database.', 'studiorum' )
+					. ' ' . __( 'So when you specify the default value with the <code>default</code> or <code>value</code> element, specify the KEY.', 'studiorum' ),
+			);
+
+			return $settingsFields;
+
+		}/* studiorum_settings_settings_fields__addLectioSettingsFields */
+
+
 
 
 	}/* class Studiorum_Lectio */

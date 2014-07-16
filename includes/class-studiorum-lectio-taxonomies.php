@@ -82,7 +82,7 @@
 				'parent_item_colon'	=> __( 'Parent ' . $this->singularName . ' :' ),
 				'edit_item'			=> __( 'Edit ' . $this->singularName ),
 				'update_item'		=> __( 'Update ' . $this->singularName ),
-				'add_new_item'		=> __( 'Add New ' . $this->singularName ),
+				'add_new_item'		=> __( 'Add New ' . $this->menuName ),
 				'new_item_name'		=> __( 'New ' . $this->singularName . ' Name' ),
 				'menu_name'			=> __( $this->menuName ),
 			);
