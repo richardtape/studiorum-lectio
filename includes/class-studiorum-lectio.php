@@ -55,6 +55,12 @@
 			// Add our options to the options panel
 			add_action( 'studiorum_settings_setup_start', array( $this, 'studiorum_settings_setup_start__addFilters' ) );
 
+			// Add the editor styles, hopefully making it easier for a user to create content as it will be produced
+			add_action( 'init', array( $this, 'init__addEditorStyles' ), 999 );
+
+			// Add some inline styles
+			add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts__inlineStyles' ) );
+
 		}/* __construct() */
 
 
@@ -93,9 +99,10 @@
 		{
 
 			$args['quicktags'] 			= false;
-			$args['textarea_rows'] 		= 15;
+			$args['textarea_rows'] 		= 25;
 			$args['drag_drop_upload'] 	= true;
 			$args['media_buttons'] 		= true;
+			$args['dfw'] 				= true;
 
 			return $args;
 
@@ -399,7 +406,50 @@
 		}/* studiorum_settings_settings_fields__addLectioSettingsFields */
 
 
+		/**
+		 * Add editor styles so it's easier for students to create content that appears as it will on the front-end.
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return null
+		 */
 
+		public function init__addEditorStyles()
+		{
+
+			$stylesheet = trailingslashit( LECTIO_PLUGIN_URL ) . 'includes/assets/css/front-end-editor-style.css';
+
+			// add_editor_style only works in the admin. *sigh*. So, let's try and manipulate the globa $editor_styles array
+			global $editor_styles;
+			$editor_styles = (array) $editor_styles;
+			$stylesheet    = (array) $stylesheet;
+			$editor_styles = array_merge( $editor_styles, $stylesheet );
+
+			// Also add this for the admin
+			add_editor_style( $stylesheet );
+
+		}/* init__addEditorStyles() */
+
+
+		/**
+		 * Inline styles (mostly to remove some items from the DFW window)
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public function wp_enqueue_scripts__inlineStyles()
+		{
+
+			$removeUpdateButton = '#wp-fullscreen-save input{ display: none !important; }';
+
+			wp_add_inline_style( 'editor-buttons', $removeUpdateButton );
+			wp_add_inline_style( 'editor-buttons-css', $removeUpdateButton );
+
+		}/* wp_enqueue_scripts__inlineStyles() */
 
 	}/* class Studiorum_Lectio */
 
