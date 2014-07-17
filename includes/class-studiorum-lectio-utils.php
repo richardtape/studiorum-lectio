@@ -112,4 +112,70 @@
 
 		}/* fetchCurrentUsersSubmissions() */
 
+
+		/**
+		 * We need a list of all available public post type posts for the dropdowns in the options
+		 * so admins are able to tell us which posts/pages have a gForm on it on which students can
+		 * upload media
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return array Associative array of arrays array( 'post_type_1' => array( 1 => 'PostID 1 Title' ), 'post_type_2' => array( 23 => 'PostID 23 Title' ) )
+		 */
+
+		public static function getAllPostTypesIDsAndTitles()
+		{
+
+			// We want to grab all publicly available post types, excluding the built-in ones, meaning we 
+			// can manually add posts/pages and ensure we have all CPTs We also exclude lectio-submissions
+			$args = array(
+				'public'   => true,
+				'_builtin' => false
+			);
+
+			$postTypes = get_post_types( $args, 'names' );
+
+			$postTypes['post'] = 'post';
+			$postTypes['page'] = 'page';
+
+			if( isset( $postTypes[static::$postTypeSlug] ) ){
+				unset( $postTypes[static::$postTypeSlug] );
+			}
+
+			if( !$postTypes ){
+				return false;
+			}
+
+			// Set up our WP_Query args
+			$WPQueryArgs = array(
+				'posts_per_page' 	=> -1,
+				'post_type' 		=> array_keys( $postTypes ),
+				'post_status' 		=> 'any'
+			);
+
+			// Set up our output
+			$output = array( 0 => __( 'Select Post', 'studiorum-lectio' ) );
+
+			$allPostsQuery = new WP_Query( $WPQueryArgs );
+
+			if( $allPostsQuery->have_posts() ) : while ( $allPostsQuery->have_posts() ) : $allPostsQuery->the_post();
+
+				$postID 	= get_the_ID();
+				$postType 	= get_post_type();
+				$title 		= get_the_title();
+
+				// Ensure this post type has an array key
+				if( !array_key_exists( $postType, $output ) ){
+					$output[$postType] = array();
+				}
+
+				$output[$postType][$postID] = '(ID: ' . $postID . ') ' .  $title;
+
+			endwhile; wp_reset_postdata(); endif;
+
+			return $output;
+
+		}/* getAllPostTypesIDsAndTitles() */
+
 	}/* class Studiorum_Lectio_Utils() */

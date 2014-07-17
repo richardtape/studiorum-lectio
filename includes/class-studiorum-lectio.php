@@ -141,10 +141,11 @@
 			}
 
 			// Which posts/pages is the user able to edit
-			// @TODO Determine which pages the forms are on. Options?
-			$allowedPostIDsForCurrentUser = apply_filters( 'studiorum_lectio_post_ids_to_allow_students_to_upload_media', array( '2' ), $capauser, $capask, $param );
+			// Fetch from the option and run through a filter
+			$selectedPages = get_studiorum_option( 'lectio_options', 'posts_containing_forms' );
+			$allowedPostIDsForCurrentUser = apply_filters( 'studiorum_lectio_post_ids_to_allow_students_to_upload_media', array_values( $selectedPages ), $capauser, $capask, $param );
 
-			// Grab the post/page
+			// Grab the current post/page
 			$post = get_post( intval( $param[2] ) );
 
 			if( !$post || !isset( $post->ID ) ){
@@ -384,21 +385,18 @@
 				$settingsFields = array();
 			}
 
+			$dropdownValues = Studiorum_Lectio_Utils::getAllPostTypesIDsAndTitles();
+
 			$settingsFields[] = array(	// Single Drop-down List
-				'field_id'		=>	'select',
+				'field_id'		=>	'posts_containing_forms',
 				'section_id'	=>	'lectio_options',
-				'title'			=>	__( 'Dropdown List', 'studiorum' ),
+				'title'			=>	__( 'Posts Containing Forms', 'studiorum-lectio' ),
 				'type'			=>	'select',
-				'help'			=>	__( 'This is the <em>select</em> field type.', 'studiorum' ),
-				'default'		=>	2,	// the index key of the label array below which yields 'Yellow'.
-				'label'			=>	array( 
-					0	=>	'Red',		
-					1	=>	'Blue',
-					2	=>	'Yellow',
-					3	=>	'Orange',
-				),
-				'description'	=>	__( 'The key of the array of the <code>label</code> element serves as the value of the option tag which will be sent to the form and saved in the database.', 'studiorum' )
-					. ' ' . __( 'So when you specify the default value with the <code>default</code> or <code>value</code> element, specify the KEY.', 'studiorum' ),
+				// 'help'			=>	__( 'This is the <em>select</em> field type.', 'studiorum-lectio' ),
+				'default'		=>	0,	// the index key of the label array below which yields 'Yellow'.
+				'repeatable' 	=> true,
+				'label'			=>	$dropdownValues,
+				'description'	=>	__( 'We need to know one which posts or pages you have placed a submission form.', 'studiorum-lectio' )
 			);
 
 			return $settingsFields;
