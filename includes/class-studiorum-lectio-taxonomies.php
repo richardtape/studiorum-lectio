@@ -38,8 +38,9 @@
 			// Register our taxonomies
 			add_action( 'init', array( $this, 'init__registerTaxonomy' ), 10 );
 
-			// Add custom meta to taxonomies
-			add_action( 'init', array( $this, 'init__addMetaToTaxonomies' ), 20 );
+			// When a new submission category/assignment is made, we look to see if there's any meta to send emails on schedules etc
+			add_action( 'update_option_Studiorum_Lectio_Assignment_Taxonomy_Meta', array( $this, 'update_option__handleSubmissionDeadlines' ), 999, 2 );
+			add_action( 'add_option_Studiorum_Lectio_Assignment_Taxonomy_Meta', array( $this, 'add_option__handleSubmissionDeadlines' ), 999, 2 );
 
 		}/* __construct() */
 
@@ -106,66 +107,237 @@
 
 
 		/**
-		 * Add meta to our taxonomies
+		 * When a new submission/term is created we hook in to see if there is a deadline and 
+		 * if we're sending reminder emails. If so, we set up a wp_cron job to handle that
 		 *
 		 * @since 0.1
 		 *
-		 * @param null
+		 * @param array $oldValue - The whole option before saving
+		 * @param array $newValue - The whole options after saving
 		 * @return null
 		 */
 
-		public function init__addMetaToTaxonomies()
+		public function update_option__handleSubmissionDeadlines( $oldValue, $newValue )
 		{
 
-			if( !is_admin() ){
+			if( !$oldValue || !$newValue ){
 				return;
 			}
 
-			$this->addMetaToSubmissionCategories();
+			// First thing to do is do a diff between old and new to see what has been added
+			$added = array_diff_key( $newValue, $oldValue );
 
-		}/* init__addMetaToTaxonomies() */
+			if( !$added || !is_array( $added ) || empty( $added ) ){
+				return;
+			}
+
+			$this->processSubmissionDeadlineData( $added );
+
+		}/* update_option__handleSubmissionDeadlines() */
 
 
 		/**
-		 * We need some meta for our submission categories. 
+		 * If this is the first submission cat to be added, then add_option is called
 		 *
 		 * @since 0.1
 		 *
-		 * @param null
+		 * @param string $option the option name
+		 * @param array $added data added to the $option
 		 * @return null
 		 */
 
-		public function addMetaToSubmissionCategories()
+		public function add_option__handleSubmissionDeadlines( $option, $added )
 		{
 
-			$prefix = 'sub_cat_meta_';
+			$this->processSubmissionDeadlineData( $added );
 
-			$config = array(
-				'id' => $prefix . 'meta_box',		// meta box id, unique per meta box
-				'title' => 'Assignment Settings',	// meta box title
-				'pages' => array( $this->slug ),	// taxonomy name, accept categories, post_tag and custom taxonomies
-				'context' => 'normal',				// where the meta box appear: normal (default), advanced, side; optional
-				'fields' => array(),				// list of meta fields (can be added by field arrays)
-				'local_images' => false,			// Use local or hosted images (meta box images for add/remove)
-				'use_with_theme' => false			// change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
-			);
+		}/* add_option__handleSubmissionDeadlines() */
 
-			// Register the meta box
-			$subCatMeta = new Tax_Meta_Class( $config );
 
-			// Add fields to it : https://raw.githubusercontent.com/bainternet/Tax-Meta-Class/master/class-usage-demo.php
-			// $subCatMeta->addText( 
-			// 	$prefix . 'text_field_id',
-			// 	array( 
-			// 		'name'=> __( 'My Text ', 'studiorum-lectio' )
-			// 	)
-			// );
+		/**
+		 * Helper method to process new submission categories and the meta attached to them
+		 * to determine if any scheduled events need to be sent
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $added Data that has just been added
+		 * @return string|int returnDescription
+		 */
 
-			// Finish
-			$subCatMeta->Finish();
+		public function processSubmissionDeadlineData( $added )
+		{
 
-		}/* addMetaToSubmissionCategories() */
+			// Should be an array where the keys are the term ID that has just been added and the values, an assoc. array
+			// of meta field ID => content
+
+			// Test whether this assignment has a deadline and that there is a need for a reminder email
+			$subsWithDeadlines = $this->checkForDeadlinesWithEmails( $added );
+
+			if( !$subsWithDeadlines || !is_array( $subsWithDeadlines ) || empty( $subsWithDeadlines ) ){
+				return;
+			}
+
+			$usableForScheduledEvents = $this->convertToUsableEvents( $subsWithDeadlines );
+
+			if( !$usableForScheduledEvents || !is_array( $usableForScheduledEvents ) || empty( $usableForScheduledEvents ) ){
+				return;
+			}
+
+			// Array of arrays: array( array( 'emailTimestamp' => 1274123617, 'termID' => 23, 'subject' => '', 'content' => '' ) );
+			// Now schedule a single event based on each of these
+			foreach( $usableForScheduledEvents as $key => $emailData )
+			{
+				
+				$when 		= $emailData['emailTimestamp'];
+				$subject 	= $emailData['subject'];
+				$content 	= $emailData['content'];
+				$termID 	= $emailData['termID'];
+
+				wp_schedule_single_event( $when, 'studiorum_lectio_send_reminder_email', array( $subject, $content, $termID ) );
+
+			}
+
+		}/* processSubmissionDeadlineData() */
+
+
+		/**
+		 * From a given array of new submission categories, work out which ones have deadlines
+		 * that also have an email to be sent
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $added Item[s] that have been added
+		 * @return array An array of items that have deadlines and an email needs to be sent
+		 */
+
+		private function checkForDeadlinesWithEmails( $added = array() )
+		{
+
+			// Start fresh
+			$deadlinesWithEmails = array();
+
+			foreach( $added as $termID => $termMeta )
+			{
+				
+				// Does this have a deadline?
+				if( !isset( $termMeta['assignment_has_deadline'] ) || $termMeta['assignment_has_deadline'] == 'undefined' ){
+					continue;
+				}
+
+				// Does it require a reminder email
+				if( !isset( $termMeta['assignment_send_reminder_email'] ) || $termMeta['assignment_send_reminder_email'] == 'undefined' ){
+					continue;
+				}
+
+				$deadlinesWithEmails[$termID] = $termMeta;
+
+			}
+
+			return $deadlinesWithEmails;
+
+		}/* checkForDeadlinesWithEmails() */
+
+
+		/**
+		 * We have been passed an array of submission categories that require an automated reminder email
+		 * the deadline is a datetime and the 'when to send' is a number of seconds. So we need to convert
+		 * the datetime into seconds, minus the number of 'when to send' and then convert that back to a date
+		 * so we know when to set the cron
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $subsWithDeadlines an array with the keys as term IDs and the values are an assoc. array of meta
+		 * @return array An array of details we can use to add scheduled events
+		 */
+
+		private function convertToUsableEvents( $subsWithDeadlines = array() )
+		{
+
+			// Start fresh
+			$usableData = array();
+
+			foreach( $subsWithDeadline as $termID => $termMeta )
+			{
+				
+				$dateTime = ( isset( $termMeta['assignment_deadline_datetime'] ) ) ? $termMeta['assignment_deadline_datetime'] : false;
+
+				if( !$dateTime ){
+					continue;
+				}
+
+				// Calculate the time/date we need to send the email
+				$deadlineTimestamp = strtotime( $dateTime );
+				$numberOfSecondsBeforeDeadlineWeSendEmail = $termMeta['assignment_send_reminder_before_date'];
+
+				$timestampOfWhenWeMustSendEmail = $deadlineTimestamp - $numberOfSecondsBeforeDeadlineWeSendEmail;
+
+				$assigmentReminderEmailSubject = $termMeta['assigment_reminder_email_subject'];
+				$assigmentReminderEmailContent = $termMeta['assigment_reminder_email_content'];
+
+				$thisItem = array(
+					'emailTimestamp' => $timestampOfWhenWeMustSendEmail,
+					'termID' => $termID,
+					'subject' => $assigmentReminderEmailSubject,
+					'content' => $assigmentReminderEmailContent
+				);
+
+				$usableData[] = $thisItem;
+
+			}
+
+			return $usableData;
+
+		}/* convertToUsableEvents() */
+
+
+		/**
+		 * description
+		 *
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+
+		/**
+		 * Method called by cron to send email as a reminder
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public function sendReminderEmail()
+		{
+
+			$to = 'richard@iamfriendly.com';
+			$subject = 'Test';
+			$message = 'Test message';
+			$headers = array();
+			$attachments = array();
+
+
+
+			wp_mail( $to, $subject, $message, $headers, $attachments );
+
+		}/* sendReminderEmail */
 
 	}/* class Studiorum_Lectio_Assignment_Taxonomy() */
 
-	$Studiorum_Lectio_Assignment_Taxonomy = new Studiorum_Lectio_Assignment_Taxonomy();
+
+
+
+
+
+	// set_current_user runs after after_setup_theme but before init
+	add_action( 'set_current_user', 'set_current__userregisterStudiorumLectioTaxonomies', 5 );
+
+	function set_current__userregisterStudiorumLectioTaxonomies()
+	{
+
+		$Studiorum_Lectio_Assignment_Taxonomy = new Studiorum_Lectio_Assignment_Taxonomy;
+
+	}/* set_current__userregisterStudiorumLectioTaxonomies() */
