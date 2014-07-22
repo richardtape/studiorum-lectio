@@ -362,11 +362,11 @@
 			}
 
 			// Some filters
-			$emailAddresses 	= apply_filters( 'studiorum_lectio_reminder_email_email_addresses', $emailAddresses );
-			$subject 			= apply_filters( 'studiorum_lectio_reminder_email_subject', $subject );
+			$emailAddresses 	= apply_filters( 'studiorum_lectio_reminder_email_email_addresses', $emailAddresses, $termID );
+			$subject 			= apply_filters( 'studiorum_lectio_reminder_email_subject', $subject, $termID );
 			$content 			= apply_filters( 'studiorum_lectio_reminder_email_content', $content );
-			$headers 			= apply_filters( 'studiorum_lectio_reminder_email_headers', array() );
-			$attachments 		= apply_filters( 'studiorum_lectio_reminder_email_attachments', array() );
+			$headers 			= apply_filters( 'studiorum_lectio_reminder_email_headers', array(), $termID );
+			$attachments 		= apply_filters( 'studiorum_lectio_reminder_email_attachments', array(), $termID );
 			
 			$this->sendReminderEmail( $emailAddresses, $subject, $content, $headers, $attachments );
 

@@ -61,6 +61,14 @@
 		function setUp()
 		{
 
+			// Reminder times/dates MUST be number of seconds
+			$emailReminderTimes = array( 
+				DAY_IN_SECONDS 			=> __( 'One Day Before', 'studiorum-lectio' ),
+				( DAY_IN_SECONDS * 2 )	=> __( 'Two Days Before', 'studiorum-lectio' ),
+				WEEK_IN_SECONDS 		=> __( 'One Week Before', 'studiorum-lectio' ),
+			);
+			$emailReminderTimes = apply_filters( 'studiorum_lectio_reminder_email_times_list', $emailReminderTimes );
+
 			$this->addSettingFields(
 
 				array(
@@ -95,11 +103,7 @@
 					'type'			=> 'select',
 					'title'			=> __( 'When to send the reminder', 'studiorum-lectio' ),
 					'description'	=> __( 'How long prior to the deadline do you want to send the reminder email?', 'studiorum-lectio' ),
-					'label' => array( 
-						DAY_IN_SECONDS 			=> __( 'One Day Before', 'studiorum-lectio' ),
-						( DAY_IN_SECONDS * 2 )	=> __( 'Two Days Before', 'studiorum-lectio' ),
-						WEEK_IN_SECONDS 		=> __( 'One Week Before', 'studiorum-lectio' ),
-					),
+					'label' 		=> $emailReminderTimes,
 					'default' 		=> DAY_IN_SECONDS,
 					'hidden'		=> true,
 				),	
