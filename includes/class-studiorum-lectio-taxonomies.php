@@ -42,6 +42,9 @@
 			add_action( 'update_option_Studiorum_Lectio_Assignment_Taxonomy_Meta', array( $this, 'update_option__handleSubmissionDeadlines' ), 999, 2 );
 			add_action( 'add_option_Studiorum_Lectio_Assignment_Taxonomy_Meta', array( $this, 'add_option__handleSubmissionDeadlines' ), 999, 2 );
 
+			// When a new sub cat/assignment is made a custom event is triggered via wp_schedule_single_event() which we hook into here to send emails
+			add_action( 'studiorum_lectio_send_reminder_email', array( $this, 'studiorum_lectio_send_reminder_email__calculateWhoToSendEmailToAndSend' ), 10, 3 );
+
 		}/* __construct() */
 
 
@@ -256,7 +259,7 @@
 			// Start fresh
 			$usableData = array();
 
-			foreach( $subsWithDeadline as $termID => $termMeta )
+			foreach( $subsWithDeadlines as $termID => $termMeta )
 			{
 				
 				$dateTime = ( isset( $termMeta['assignment_deadline_datetime'] ) ) ? $termMeta['assignment_deadline_datetime'] : false;
@@ -291,14 +294,127 @@
 
 
 		/**
-		 * description
-		 *
+		 * We have a call to wp_schedule_single_event() whenever a new submission category is created that requires a reminder email
+		 * which fires a custom event 'studiorum_lectio_send_reminder_email' - this method hooks into that event and calculates
+		 * who to send the mail to and then passes that info off to another method to send the email
 		 *
 		 * @since 0.1
 		 *
-		 * @param string $param description
-		 * @return string|int returnDescription
+		 * @param string $subject The subject of the email
+		 * @param string $content The content of the email
+		 * @param int $termID The term ID that has just been added
+		 * @return null
 		 */
+
+		public function studiorum_lectio_send_reminder_email__calculateWhoToSendEmailToAndSend( $subject, $content, $termID )
+		{
+
+			// Fetch all student users
+			$allUsersOnSite = Studiorum_Lectio_Utils::getThisSitesUsers();
+
+			// We'll need just the IDs of people who have not submitted
+			$usersIDsWhoHaveNotSubmitted = array();
+
+			// If a student has already submitted, we don't need to send them an email
+			$usersWhoHaveAlreadySubmitted = $this->getAuthorsWhoHaveSubmittedPostForSubCat( $termID );
+
+			foreach( $allUsersOnSite as $key => $userObject )
+			{
+			
+				$userID = $userObject->ID;
+
+				if( in_array( $userID, array_values( $usersWhoHaveAlreadySubmitted ) ) ){
+					continue;
+				}
+
+				if( array_key_exists( $userID, $usersIDsWhoHaveNotSubmitted ) ){
+					continue;
+				}
+
+				$usersIDsWhoHaveNotSubmitted[] = $userID;
+
+			}
+
+			// Run this through a filter as we'll want to edit this for user groups etc.
+			$usersIDsWhoHaveNotSubmitted = apply_filters( 'studiorum_lectio_reminder_email_user_ids_who_have_not_submitted', $usersIDsWhoHaveNotSubmitted, $termID );
+
+			// If we now have some User IDs, we should send them the email
+			if( !$usersIDsWhoHaveNotSubmitted || !is_array( $usersIDsWhoHaveNotSubmitted ) || empty( $usersIDsWhoHaveNotSubmitted ) )
+			{
+
+				do_action( 'studiorum_lectio_reminder_email_no_users_to_send_reminder_to', $termID );
+				return;
+
+			}
+
+			$emailAddresses = array();
+
+			foreach( $usersIDsWhoHaveNotSubmitted as $key => $userID )
+			{
+
+				$userObject = get_user_by( 'id', $userID );
+				$emailAddress = $userObject->user_email;
+
+				if( !in_array( $emailAddress, array_values( $emailAddresses ) ) ){
+					$emailAddresses[] = $emailAddress;
+				}
+
+			}
+
+			// Some filters
+			$emailAddresses 	= apply_filters( 'studiorum_lectio_reminder_email_email_addresses', $emailAddresses );
+			$subject 			= apply_filters( 'studiorum_lectio_reminder_email_subject', $subject );
+			$content 			= apply_filters( 'studiorum_lectio_reminder_email_content', $content );
+			$headers 			= apply_filters( 'studiorum_lectio_reminder_email_headers', array() );
+			$attachments 		= apply_filters( 'studiorum_lectio_reminder_email_attachments', array() );
+			
+			$this->sendReminderEmail( $emailAddresses, $subject, $content, $headers, $attachments );
+
+		}/* studiorum_lectio_send_reminder_email__calculateWhoToSendEmailToAndSend() */
+
+
+		/**
+		 * Method to determine which students have submitted a post for a particular assignment.
+		 * In essence this looks for post authors of submissions in a particular submissions category
+		 *
+		 * @since 0.1
+		 *
+		 * @param (int) $termID The term ID of the submissions category for which we are searching
+		 * @return array An array of user IDs who have submitted a post for a particular assignment
+		 */
+
+		public function getAuthorsWhoHaveSubmittedPostForSubCat( $termID = false )
+		{
+
+			if( !$termID ){
+				return array();
+			}
+
+			// Start fresh
+			$alreadySubmittedAuthors = array();
+
+			$allSubmissions = Studiorum_Lectio_Utils::fetchUsersSubmissions();
+
+			if( !$allSubmissions || !is_array( $allSubmissions ) || empty( $allSubmissions ) ){
+				return array();
+			}
+
+			foreach( $allSubmissions as $userID => $taxIDPostID )
+			{
+				
+				if( !array_key_exists( $termID, $taxIDPostID ) ){
+					continue;
+				}
+
+				if( !in_array( $userID, array_values( $alreadySubmittedAuthors ) ) ){
+					$alreadySubmittedAuthors[] = $userID;
+				}
+
+			}
+
+			return $alreadySubmittedAuthors;
+
+		}/* getAuthorsWhoHaveSubmittedPostForSubCat() */
 
 
 		/**
@@ -310,16 +426,8 @@
 		 * @return string|int returnDescription
 		 */
 
-		public function sendReminderEmail()
+		public function sendReminderEmail( $to, $subject, $message, $headers, $attachments )
 		{
-
-			$to = 'richard@iamfriendly.com';
-			$subject = 'Test';
-			$message = 'Test message';
-			$headers = array();
-			$attachments = array();
-
-
 
 			wp_mail( $to, $subject, $message, $headers, $attachments );
 

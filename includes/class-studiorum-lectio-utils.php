@@ -23,6 +23,8 @@
 		// The submission category slug
 		static $submissionCategorySlug = 'lectio-submission-category';
 
+		// This site's attached users
+		static $thisSitesUsers = false;
 
 		/**
 		 * Fetch which submissions a specified user has made
@@ -31,17 +33,11 @@
 		 *
 		 * @param int $userID Which user to fetch
 		 * @return array The user's lectio submission post IDs, organized by submission category
-		 * 				 i.e. array( '5' => array( 123, 456 ), '6' => array( 789 ) )
-		 * 				 means for submission category term ID 5, this user has 2 submissions with IDs 123 and 456, etc.
+		 * 				 i.e. array( '1' => array( '5' => array( 123, 456 ), '6' => array( 789 ) ) )
+		 * 				 means for submission category term ID 5, user ID 1 has 2 submissions with IDs 123 and 456, etc.
 		 */
 		public static function fetchUsersSubmissions( $userID = false )
 		{
-
-			if( !$userID ){
-				return false;
-			}
-
-			$userID = intval( $userID );
 
 			// Set up our output
 			$userSubmissions = array();
@@ -50,10 +46,20 @@
 				'post_type' 				=> static::$postTypeSlug,
 				'posts_per_page' 			=> -1,
 				'post_status' 				=> array( 'publish', 'private' ),
-				'author' 					=> $userID,
 				'update_post_meta_cache' 	=> false,
-				'update_post_term_cache' 	=> false,
+				'update_post_term_cache' 	=> false
 			);
+
+			// If we specify an author ID, we limit the query just to that user ID
+			if( $userID )
+			{
+
+				$userID = intval( $userID );
+
+				$queryArgs['author'] = $userID;
+
+			}
+
 
 			$query = new WP_Query( $queryArgs );
 
@@ -62,21 +68,29 @@
 					// We need this post's ID
 					$postID = get_the_ID();
 
+					// Author ID
+					$authorID = get_the_author_meta( 'ID' );
+
 					// Which category is this in?
 					$subCats = wp_get_object_terms( $postID, static::$submissionCategorySlug, array( 'fields' => 'ids' ) );
-
+					
 					if( !empty( $subCats ) && !is_wp_error( $subCats ) )
 					{
 
 						foreach( $subCats as $key => $subCatObject )
 						{
 
-							// If this subcat for this user already has entries, just add to it, otherwise add entry and then post
-							if( !array_key_exists( $subCatObject, $userSubmissions ) ){
-								$userSubmissions[$subCatObject] = array();
+							// Ensure this user has an array
+							if( !array_key_exists( $authorID, $userSubmissions ) ){
+								$userSubmissions[$authorID] = array();
 							}
 
-							$userSubmissions[$subCatObject][] = $postID;
+							// If this subcat for this user already has entries, just add to it, otherwise add entry and then post
+							if( !array_key_exists( $subCatObject, $userSubmissions[$authorID] ) ){
+								$userSubmissions[$authorID][$subCatObject] = array();
+							}
+
+							$userSubmissions[$authorID][$subCatObject][] = $postID;
 
 						}
 
@@ -87,7 +101,7 @@
 				return $userSubmissions;
 
 
-		}/* fetchCurrentGroups() */
+		}/* fetchUsersSubmissions() */
 
 
 		/**
@@ -177,5 +191,57 @@
 			return $output;
 
 		}/* getAllPostTypesIDsAndTitles() */
+
+
+		/**
+		 * Get an array of user objects for this site
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public static function getThisSitesUsers()
+		{
+
+			if( isset( static::$thisSitesUsers ) && is_array( static::$thisSitesUsers ) && !empty( static::$thisSitesUsers ) )
+			{
+				$thisSitesUsers = static::$thisSitesUsers;
+			}
+			else
+			{
+
+				$roleToFetch = apply_filters( 'studiorum_user_groups_fetch_users_role', 'studiorum_student' );
+		
+				$thisSitesUsers = static::getUsersOfRole( $roleToFetch );
+
+				static::$thisSitesUsers = $thisSitesUsers;
+
+			}
+
+			return $thisSitesUsers;
+
+		}/* getThisSitesUsers() */
+
+
+		public static function getUsersOfRole( $role = 'subscriber' )
+		{
+
+			if( !$role ){
+				return new WP_Error( '1', 'getUsersOfRole() requires a $role argument' );
+			}
+
+			$args = array(
+				'role' => $role
+			);
+
+			$wp_user_search = new WP_User_Query( $args );
+
+			$users = $wp_user_search->get_results();
+
+			return $users;
+
+		}/* getUsersOfRole() */
 
 	}/* class Studiorum_Lectio_Utils() */
