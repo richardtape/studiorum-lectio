@@ -26,12 +26,15 @@
 		// This site's attached users
 		static $thisSitesUsers = false;
 
+		// The option name for the tax meta
+		static $submissionsCategoryOptionName = 'Studiorum_Lectio_Assignment_Taxonomy_Meta';
+
 		/**
 		 * Fetch which submissions a specified user has made
 		 *
 		 * @since 0.1
 		 *
-		 * @param int $userID Which user to fetch
+		 * @param int|array $userID Which user to fetch
 		 * @return array The user's lectio submission post IDs, organized by submission category
 		 * 				 i.e. array( '1' => array( '5' => array( 123, 456 ), '6' => array( 789 ) ) )
 		 * 				 means for submission category term ID 5, user ID 1 has 2 submissions with IDs 123 and 456, etc.
@@ -54,12 +57,17 @@
 			if( $userID )
 			{
 
-				$userID = intval( $userID );
+				if( !is_array( $userID ) )
+				{
+					$userID = intval( $userID );
+					$userID = array( $userID );
+				}
 
-				$queryArgs['author'] = $userID;
+				$queryArgs['author__in'] = $userID;
 
 			}
 
+			$queryArgs = apply_filters( 'studiorum_lectio_fetch_users_submissions_query_args', $queryArgs, $userID );
 
 			$query = new WP_Query( $queryArgs );
 
@@ -73,7 +81,7 @@
 
 					// Which category is this in?
 					$subCats = wp_get_object_terms( $postID, static::$submissionCategorySlug, array( 'fields' => 'ids' ) );
-					
+
 					if( !empty( $subCats ) && !is_wp_error( $subCats ) )
 					{
 
@@ -99,7 +107,6 @@
 				endwhile; wp_reset_postdata(); endif;
 
 				return $userSubmissions;
-
 
 		}/* fetchUsersSubmissions() */
 
@@ -243,5 +250,215 @@
 			return $users;
 
 		}/* getUsersOfRole() */
+
+
+		/**
+		 * MEthod to detemine if we are currently on a page which is showing an assignment entry gForm (Set in the back end options)
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public static function isAssignmentEntryPage( $postID = false )
+		{
+
+			// First check we're on a page with a valid gForm (set in options)
+			$postsContainingForms = get_studiorum_option( 'lectio_options', 'posts_containing_forms' );
+
+			if( !$postsContainingForms || empty( $postsContainingForms ) ){
+				return false;
+			}
+
+			// See if the current page is one of the ones in $postsContainingForms
+			$currentPostID = ( $postID ) ? $postID : get_the_ID();
+
+			if( !$currentPostID )
+			{
+
+				global $post;
+
+				if( !$post || !is_object( $post ) || !isset(  $post->ID ) ){
+					return false;
+				}
+
+				$currentPostID = $post->ID;
+
+			}
+
+			if( !in_array( $currentPostID, $postsContainingForms ) ){
+				return false;
+			}
+
+			return true;
+
+		}/* isAssignmentEntryPage() */
+
+
+		/**
+		 * Helper method to find which assignment (term ID) has been selected for a particular gravity form
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $formFields An array of form fields
+		 * @param int $keyForTaxField We may already know the key of the form field
+		 * @return int|false The term ID that has been chosen or false
+		 */
+
+		public static function getTermIDFromFormFields( $formFields = array(), $keyForTaxField = false )
+		{
+
+			// Start fresh
+			if( $keyForTaxField === false )
+			{
+
+				// Check the fields for a 'populateTaxonomy' attribute
+				foreach( $formFields as $key => $field )
+				{
+					
+					if( isset( $field['populateTaxonomy'] ) && $field['populateTaxonomy'] == Studiorum_Lectio_Utils::$submissionCategorySlug ){
+						$keyForTaxField = $key;
+						break;
+					}
+
+				}
+
+			}
+
+			// If we don't have one which is for a taxonomy, run away
+			if( !$keyForTaxField && $keyForTaxField !== 0 ){
+				return false;
+			}
+			
+			// So now we know which field is for the taxonomy, let's get that field's choices
+			$choices = $formFields[$keyForTaxField]['choices'];
+
+			$keyForChosenTermID = false;
+
+			// Look for the choice which has an attribute of 'isSelected'
+			foreach( $choices as $choiceKey => $choiceData )
+			{
+				
+				if( isset( $choiceData['isSelected'] ) && $choiceData['isSelected'] == 1  )
+				{
+
+					$keyForChosenTermID = $choiceKey;
+					break;
+
+				}
+
+			}
+
+			if( !$keyForChosenTermID && $keyForChosenTermID !== 0 ){
+				return $form_tag;
+			}
+
+			$submissionCatTermID = ( is_numeric( $formFields[$keyForTaxField]['choices'][$keyForChosenTermID]['value'] ) ) ? absint( $formFields[$keyForTaxField]['choices'][$keyForChosenTermID]['value'] ) : $formFields[$keyForTaxField]['choices'][$keyForChosenTermID]['value'];
+
+			if( !is_int( $submissionCatTermID ) ){
+				$submissionCatTermID = static::convertTermNameToTermID( $submissionCatTermID );
+			}
+
+			return $submissionCatTermID;
+
+		}/* getTermIDFromFormFields() */
+
+
+		/**
+		 * Helper method to determine if a user has already submitted for a particular submissions category (assignment)
+		 *
+		 * @since 0.1
+		 *
+		 * @param int|array $userID The user ID/IDs to check
+		 * @param int $submissionCatTermID The TermID of the submissins category
+		 * @param int $maxNumOfSubmissionsPerUser Max number of submissions.
+		 * @return false|array False or an array of submission post IDs
+		 */
+
+		public static function hasUserSubmittedAssignment( $userID = false, $submissionCatTermID = false, $maxNumOfSubmissionsPerUser = 1 )
+		{
+
+			$submissionsForUser =  Studiorum_Lectio_Utils::fetchUsersSubmissions( $userID );
+
+			if( !$submissionsForUser || !is_array( $submissionsForUser ) || empty( $submissionsForUser ) ){
+				return false;
+			}
+
+			$maxNumOfSubmissionsPerUser = ( Studiorum_Lectio_Utils::getSubmissionsCatTaxMeta( $submissionCatTermID, 'assignment_max_submissions' ) !== null ) ? Studiorum_Lectio_Utils::getSubmissionsCatTaxMeta( $submissionCatTermID, 'assignment_max_submissions' ) : $maxNumOfSubmissionsPerUser;
+			$maxNumOfSubmissionsPerUser = apply_filters( 'studiorum_lectio_max_submissions_per_assignment', $maxNumOfSubmissionsPerUser, $submissionCatTermID );
+
+			$hasSubmitted = false;
+
+			foreach( $submissionsForUser as $userID => $termIDAndPosts )
+			{
+				
+				if( !array_key_exists( $submissionCatTermID, $termIDAndPosts ) ){
+					continue;
+				}
+
+				$submissionsToThisTerm = $termIDAndPosts[$submissionCatTermID];
+
+				if( count( $submissionsToThisTerm ) >= $maxNumOfSubmissionsPerUser )
+				{
+
+					$hasSubmitted = $submissionsToThisTerm;
+					break;
+
+				}
+
+			}
+
+			return apply_filters( 'studiorum_lectio_user_has_submitted_assignment', $hasSubmitted, $userID, $submissionCatTermID, $maxNumOfSubmissionsPerUser );
+
+		}/* hasUserSubmittedAssignment() */
+
+
+		/**
+		 * Convert a term name into a term ID
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $termName The term name to convert
+		 * @return int The term ID that has this term name
+		 */
+
+		public static function convertTermNameToTermID( $termName = '' )
+		{
+
+			if( empty( $termName ) ){
+				return false;
+			}
+
+			$termObject = get_term_by( 'name', $termName, static::$submissionCategorySlug );
+
+			if( $termObject && isset( $termObject->term_id ) ){
+				return $termObject->term_id;
+			}
+
+			return false;
+
+		}/* convertTermNameToTermID() */
+
+
+		/**
+		 * Helper method to retrieve the tax meta options
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public static function getSubmissionsCatTaxMeta( $termID = false, $fieldID = false )
+		{
+
+			$optionName = static::$submissionsCategoryOptionName;
+
+			$savedData = get_option( $optionName );
+
+			return $savedData[$termID][$fieldID];
+
+		}/* getSubmissionsCatTaxMeta() */
 
 	}/* class Studiorum_Lectio_Utils() */

@@ -1,0 +1,15 @@
+.pre-form-message{
+	padding: 20px;
+}
+
+.already-submitted{
+
+	background: #0074a2;
+
+}
+
+	.already-submitted p,
+	.already-submitted a,
+	.already-submitted li{
+		color: white;
+	}

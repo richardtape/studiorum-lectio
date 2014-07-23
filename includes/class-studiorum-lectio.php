@@ -34,16 +34,10 @@
 			// Load our necessary post types and taxonomies
 			add_action( 'after_setup_theme', array( $this, 'after_setup_theme__includes' ), 1 );
 
-			// We have a filter for the WYSIWYG add-on for gForms allowing us to modify the type of editor
-			add_filter( 'gforms_wysiwyg_wp_editor_args', array( $this, 'gforms_wysiwyg_wp_editor_args__adjustWPEditor' ), 10, 2 );
-
 			// We need for students to be able to edit the page on which the upload form is on - so they can add media to the WYSIWYG
 			add_filter( 'user_has_cap', array( $this, 'user_has_cap__giveStudentAbilityToEditFormPage' ), 100, 3 );
 
 			add_filter( 'user_has_cap', array( $this, 'user_has_cap__alterSubmissionsVisibility' ), 100, 3 );
-
-			// Add a 'private' option to the gForms post fields so only authors of the post and educators & above can view the post
-			add_filter( 'gform_post_status_options', array( $this, 'gform_post_status_options__addPrivateToDropdown' ) );
 
 			// Remove 'private' and 'protected' from titles
 			add_filter( 'private_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
@@ -60,6 +54,9 @@
 
 			// Add some inline styles
 			add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts__inlineStyles' ) );
+
+			// Some extra styles for warning messages etc.
+			add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts__frontEndStyles' ) );
 
 		}/* __construct() */
 
@@ -84,29 +81,6 @@
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/gravity-forms-hooks/class-studiorum-lectio-gravity-forms-hooks.php' );
 
 		}/* after_setup_theme__includes() */
-
-		/**
-		 * Adjust the wp_editor() call in the gForms WYSIWYG add-on. We require the media buttons etc.
-		 *
-		 * @since 0.1
-		 *
-		 * @param (array) $args The arguments passed into wp_editor()
-		 * @param (array) $field The entire wysiwyg field
-		 * @return (array) $args The modified arguments passed into wp_editor()
-		 */
-
-		public function gforms_wysiwyg_wp_editor_args__adjustWPEditor( $args, $field )
-		{
-
-			$args['quicktags'] 			= false;
-			$args['textarea_rows'] 		= 25;
-			$args['drag_drop_upload'] 	= true;
-			$args['media_buttons'] 		= true;
-			$args['dfw'] 				= true;
-
-			return $args;
-
-		}/* gforms_wysiwyg_wp_editor_args__adjustWPEditor() */
 
 
 		/**
@@ -223,25 +197,6 @@
 			return $capauser;
 
 		}/* user_has_cap__alterSubmissionsVisibility() */
-
-
-		/**
-		 * Add a private option to the gForm dropdown list of post statuses
-		 *
-		 * @since 0.1
-		 *
-		 * @param string $param description
-		 * @return string|int returnDescription
-		 */
-
-		public function gform_post_status_options__addPrivateToDropdown( $postStatuses )
-		{
-
-			$postStatuses['private'] = 'Private';
-
-			return $postStatuses;
-
-		}/* gform_post_status_options__addPrivateToDropdown() */
 
 
 		/**
@@ -435,8 +390,8 @@
 		 *
 		 * @since 0.1
 		 *
-		 * @param string $param description
-		 * @return string|int returnDescription
+		 * @param null
+		 * @return null
 		 */
 
 		public function wp_enqueue_scripts__inlineStyles()
@@ -448,6 +403,28 @@
 			wp_add_inline_style( 'editor-buttons-css', $removeUpdateButton );
 
 		}/* wp_enqueue_scripts__inlineStyles() */
+
+
+		/**
+		 * Enqueue some front end styles
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return null
+		 */
+
+		public function wp_enqueue_scripts__frontEndStyles()
+		{
+
+			// First check we're on a page with a valid gForm (set in options)
+			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() ){
+				return false;
+			}
+
+			wp_enqueue_style( 'studiorum-lectio-front-end-styles', trailingslashit( LECTIO_PLUGIN_URL ) . 'includes/assets/css/studiorum-lectio-front-end-styles.css' );
+
+		}/* wp_enqueue_scripts__frontEndStyles() */
 
 	}/* class Studiorum_Lectio */
 

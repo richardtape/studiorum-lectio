@@ -19,6 +19,8 @@
 
 		var $hasDoneAJAX = false;
 
+		var $hasUserSubmittedAssignment = false;
+
 		/**
 		 * Set up actions and filters
 		 *
@@ -35,6 +37,16 @@
 			add_filter( 'gform_confirmation', array( $this, 'gform_confirmation__redirectToPostJustCreated' ), 20, 4 );
 
 			add_action( 'gform_after_submission', array( $this, 'gform_after_submission__redirectForNonAJAXSubmissions' ), 20, 2 );
+
+			// We have a filter for the WYSIWYG add-on for gForms allowing us to modify the type of editor
+			add_filter( 'gforms_wysiwyg_wp_editor_args', array( $this, 'gforms_wysiwyg_wp_editor_args__adjustWPEditor' ), 10, 2 );
+
+			// Add a 'private' option to the gForms post fields so only authors of the post and educators & above can view the post
+			add_filter( 'gform_post_status_options', array( $this, 'gform_post_status_options__addPrivateToDropdown' ) );
+
+			// Add a message to the user if they have already submitted for this assignment
+			add_filter( 'gform_pre_render', array( $this, 'gform_pre_render__hideFormIfAlreadySubmitted' ), 10, 2 );
+			add_filter( 'gform_form_tag', array( $this, 'gform_form_tag__showMessageIfAlreadySubmitted' ), 10, 2 );
 
 		}/* __construct() */
 
@@ -129,6 +141,141 @@
 			exit;
 
 		}/* gform_after_submission__redirectForNonAJAXSubmissions() */
+
+
+		/**
+		 * Adjust the wp_editor() call in the gForms WYSIWYG add-on. We require the media buttons etc.
+		 *
+		 * @since 0.1
+		 *
+		 * @param (array) $args The arguments passed into wp_editor()
+		 * @param (array) $field The entire wysiwyg field
+		 * @return (array) $args The modified arguments passed into wp_editor()
+		 */
+
+		public function gforms_wysiwyg_wp_editor_args__adjustWPEditor( $args, $field )
+		{
+
+			$args['quicktags'] 			= false;
+			$args['textarea_rows'] 		= 25;
+			$args['drag_drop_upload'] 	= true;
+			$args['media_buttons'] 		= true;
+			$args['dfw'] 				= true;
+
+			return $args;
+
+		}/* gforms_wysiwyg_wp_editor_args__adjustWPEditor() */
+
+
+		/**
+		 * Add a private option to the gForm dropdown list of post statuses
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public function gform_post_status_options__addPrivateToDropdown( $postStatuses )
+		{
+
+			$postStatuses['private'] = 'Private';
+
+			return $postStatuses;
+
+		}/* gform_post_status_options__addPrivateToDropdown() */
+
+
+		/**
+		 * If a user has already submitted this form, we show a message telling them that is the case
+		 *
+		 * @since 0.1
+		 *
+		 * @param object $form The form object
+		 * @param bool $ajax The string containing the <form> tag
+		 * @return object $form The form
+		 */
+
+		public function gform_pre_render__hideFormIfAlreadySubmitted( $form, $ajax )
+		{
+
+			// First check we're on a page with a valid gForm (set in options)
+			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() ){
+				return $form;
+			}
+
+			// OK, we're on a page which contains a gForm for assignment submissions. Let's determine if the current user already has a submission
+			$currentUserID 				= get_current_user_ID();
+			$userIDToFetchSubmissions 	= apply_filters( 'studiorum_lectio_already_submitted_user_submissions_id', $currentUserID, $form );
+
+			// See which submission category this is for
+			$formFields = $form['fields'];
+
+			$submissionCatTermID = Studiorum_Lectio_Utils::getTermIDFromFormFields( $formFields );
+
+			if( !$submissionCatTermID ){
+				return $form;
+			}
+
+			if( !is_array( $this->hasUserSubmittedAssignment ) ){
+
+				$hasUserSubmittedAssignment = Studiorum_Lectio_Utils::hasUserSubmittedAssignment( $userIDToFetchSubmissions, $submissionCatTermID );
+
+				$this->hasUserSubmittedAssignment = $hasUserSubmittedAssignment;
+
+			}
+
+			if( $this->hasUserSubmittedAssignment )
+			{
+
+				// So, the user has already hit the max number of submissions, empty the form
+				$form['fields'] = array();
+
+				// We also want to remove the submit button, too.
+				$formID = $form['id'];
+				add_filter( 'gform_submit_button_' . $formID, '__return_empty_string' );
+
+			}
+
+			return $form;
+
+		}/* gform_pre_render__hideFormIfAlreadySubmitted() */
+
+
+		/**
+		 * If this user has already submitted, we show them a message
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public function gform_form_tag__showMessageIfAlreadySubmitted( $form_tag, $form )
+		{
+
+			if( $this->hasUserSubmittedAssignment )
+			{
+				
+				$messageToPrepend = '<div class="pre-form-message already-submitted">';
+
+					$messageToPrepend .= '<p>' . __( 'You have already made a submission for this assignment.', 'studiorum-lectio' ) . '</p><ul>';
+
+					foreach( $this->hasUserSubmittedAssignment as $key => $postID ){
+						$messageToPrepend .= '<li><a href="' . get_permalink( $postID ) . '" title="">' . __( 'View Submission', 'studiorum-lectio' ) . ' ' . ($key+1) . '</a>'; 
+					}
+
+				$messageToPrepend .= '</ul></div>';
+
+				$messageToPrepend = apply_filters( 'studiorum_lectio_max_submissions_limit_message', $messageToPrepend, $form, $this->hasUserSubmittedAssignment, $form_tag );
+
+				return $messageToPrepend . $form_tag;
+
+			}
+
+			return $form_tag;
+
+		}/* gform_form_tag__showMessageIfAlreadySubmitted() */
 
 	}/* class Studiorum_Lectio_Gravity_Forms_Hooks */
 

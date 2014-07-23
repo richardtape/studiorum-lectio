@@ -72,6 +72,17 @@
 			$this->addSettingFields(
 
 				array(
+					'field_id'		=> 'assignment_max_submissions',
+					'type'			=> 'text',
+					'title'			=> __( 'Maximum # Of Submissions', 'studiorum-lectio' ),
+					'default'		=> __( '1', 'studiorum-lectio' ),
+					'attributes'	=>	array(
+						'size'		=>	48,
+					),
+					'description' 	=> __( 'How many submissions should each student (or group of students) be allowed to make for this assignment? After a student has submitted this number of times, they will be unable to submit further.', 'studiorum-lectio' )
+				),
+
+				array(
 					'field_id'		=> 'assignment_has_deadline',
 					'type'			=> 'revealer',
 					'title'			=> __( 'Assignment Deadline', 'studiorum-lectio' ),
@@ -79,7 +90,8 @@
 					'label'			=> array(
 						'undefined' => __( 'No Deadline', 'studiorum-lectio' ),
 						'#fields-assignment_deadline_datetime,#fields-assignment_send_reminder_email' => __( 'Has Deadline', 'studiorum-lectio' )
-					)
+					),
+					'description' 	=> __( 'Does this assignment have a deadline? If so, would you like to send a reminder email to students before that date?', 'studiorum-lectio' )
 				),	
 				array(
 					'field_id'		=> 'assignment_deadline_datetime',
