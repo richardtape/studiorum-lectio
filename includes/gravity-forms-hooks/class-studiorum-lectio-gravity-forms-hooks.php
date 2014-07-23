@@ -254,23 +254,43 @@
 		public function gform_form_tag__showMessageIfAlreadySubmitted( $form_tag, $form )
 		{
 
-			if( $this->hasUserSubmittedAssignment )
+			if( !$this->hasUserSubmittedAssignment || !is_array( $this->hasUserSubmittedAssignment ) || empty( $this->hasUserSubmittedAssignment ) ){
+				return $form_tag;
+			}
+
+			// Let's grab some basic info about each submission so we can show some details 
+			$submittedAssignmentDetails = array();
+
+			foreach( $this->hasUserSubmittedAssignment as $key => $postID )
 			{
-				
-				$messageToPrepend = '<div class="pre-form-message already-submitted">';
 
-					$messageToPrepend .= '<p>' . __( 'You have already made a submission for this assignment.', 'studiorum-lectio' ) . '</p><ul>';
+				$postObject 	= get_post( $postID );
 
-					foreach( $this->hasUserSubmittedAssignment as $key => $postID ){
-						$messageToPrepend .= '<li><a href="' . get_permalink( $postID ) . '" title="">' . __( 'View Submission', 'studiorum-lectio' ) . ' ' . ($key+1) . '</a>'; 
-					}
+				$permalink 		= get_permalink( $postObject->ID );
+				$excerpt 		= Studiorum_Utils::getExcerptFromPostID( $postID );
+				$title 			= get_the_title( $postID );
+				$submittedOn 	= get_the_time( 'F j, Y g:i a', $postID );
+				$author 		= get_the_author_meta( 'user_nicename', $postObject->post_author );
 
-				$messageToPrepend .= '</ul></div>';
+				$submittedAssignmentDetails[] = array(
+					'ID' 			=> $postID,
+					'permalink' 	=> $permalink,
+					'excerpt' 		=> $excerpt,
+					'title' 		=> $title,
+					'date' 			=> $submittedOn,
+					'author' 		=> $author
+				);
 
-				$messageToPrepend = apply_filters( 'studiorum_lectio_max_submissions_limit_message', $messageToPrepend, $form, $this->hasUserSubmittedAssignment, $form_tag );
+			}
 
-				return $messageToPrepend . $form_tag;
+			$numOfSubmissions = count( $submittedAssignmentDetails );
 
+			$submissionText = ( $numOfSubmissions == 1 ) ? __( 'submission', 'studiorum-lectio' ) : __( 'submissions', 'studiorum-lectio' );
+
+			$maxSubmissionsReachedTemplate = apply_filters( 'studiorum_lectio_max_submissions_reached_template_path', Studiorum_Utils::locateTemplateInPlugin( LECTIO_PLUGIN_DIR, 'includes/templates/max-submissions-reached.php' ), $form_tag, $form, $submittedAssignmentDetails );
+			
+			if( !empty( $maxSubmissionsReachedTemplate ) ){
+				include( $maxSubmissionsReachedTemplate );
 			}
 
 			return $form_tag;

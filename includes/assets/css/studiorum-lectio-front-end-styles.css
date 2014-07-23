@@ -1,15 +1,80 @@
 .pre-form-message{
-	padding: 20px;
+	
 }
 
 .already-submitted{
 
-	background: #0074a2;
-
 }
 
-	.already-submitted p,
-	.already-submitted a,
-	.already-submitted li{
-		color: white;
+	.pre-form-message h3{
+		font-family: 'Whitney SSm A', 'Whitney SSm B', Arial, sans-serif;
+		text-transform: uppercase;
+		color: #002145;
+		color: rgba(0,33,69,1);
+		font-size: 14px;
+		line-height: 24px;
+		font-weight: 700;
+		letter-spacing: 2px;
+		margin: 0 0 1.7%;
+		text-rendering: optimizelegibility;
+	}
+
+		.pre-form-message ul{
+			overflow: hidden;
+			clear: both;
+			margin: 1em 0;
+		}
+
+			.pre-form-message ul li{
+				padding: 1em;
+				margin: 0 0.5em 1em;
+				border: 1px solid #057fa5;
+				list-style-type: none;
+				-webkit-box-sizing: border-box;
+				-moz-box-sizing: border-box;
+				box-sizing: border-box;
+				float: left;
+				min-height: 290px;
+			}
+
+			.pre-form-message ul.subtotal-1 li{
+				width: 100%;
+			}
+
+			.pre-form-message ul.subtotal-2 li{
+				width: 48.717948717948715%;
+			}
+
+			.pre-form-message ul.subtotal-3 li{
+				width: 31.623931623931625%;
+			}
+
+			.pre-form-message ul.subtotal-4 li{
+				width: 23.076923076923077%;
+			}
+
+			.pre-form-message ul li h4{
+				margin: 0;
+			}
+
+				.pre-form-message ul li h4 a{
+					text-decoration: underline;
+				}
+
+			.pre-form-message ul li h5{
+				margin: 0 0 1em 0;
+				font-weight: 300;
+				color: #222;
+				color: rgba(34,34,34,1);
+				font-style: italic;
+			}
+
+	.pre-form-message p{
+		margin: 0 0 2.5%;
+		font-weight: 400;
+		color: #222;
+		color: rgba(34,34,34,1);
+		font-size: 15px;
+		line-height: 24px;
+		font-family: 'Whitney SSm A','Whitney SSm B',Arial,sans-serif;
 	}
