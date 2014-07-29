@@ -316,7 +316,6 @@
 				'tab_slug'		=>	'lectio',
 				'order'			=> 	1,
 				'title'			=>	__( 'Lectio Settings', 'studiorum-lectio' ),
-				'description'	=>	__( 'Lectio adds the ability for students to submit content through your WordPress-powered website. These settings define the basic functionality for Lectio.', 'studiorum-lectio' ),
 			);
 
 			return $settingsSections;
@@ -345,13 +344,12 @@
 			$settingsFields[] = array(	// Single Drop-down List
 				'field_id'		=>	'posts_containing_forms',
 				'section_id'	=>	'lectio_options',
-				'title'			=>	__( 'Posts Containing Forms', 'studiorum-lectio' ),
+				'title'			=>	__( 'Posts Containing Forms', 'studiorum-lectio' ) . '<span class="label-note">' . __( 'Which post(s) or page(s) have you placed a submission form?', 'studiorum-lectio' ) . '</span>',
 				'type'			=>	'select',
-				// 'help'			=>	__( 'This is the <em>select</em> field type.', 'studiorum-lectio' ),
+				'help'			=>	__( 'Currently we are unable to automatically detect which gravity form you wish to use for submissions - and hence which page you have those on. So, please let us know which page(s) you use for submissions from your students.', 'studiorum-lectio' ),
 				'default'		=>	0,	// the index key of the label array below which yields 'Yellow'.
 				'repeatable' 	=> true,
-				'label'			=>	$dropdownValues,
-				'description'	=>	__( 'We need to know one which posts or pages you have placed a submission form.', 'studiorum-lectio' )
+				'label'			=>	$dropdownValues
 			);
 
 			return $settingsFields;
