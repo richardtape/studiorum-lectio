@@ -58,6 +58,9 @@
 			// Some extra styles for warning messages etc.
 			add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts__frontEndStyles' ) );
 
+			// When a student logs in, redirect them to either a redirect_to url or the home page, not the back end
+			add_filter( 'login_redirect', array( $this, 'login_redirect__studentDoesNotLogInToBackEnd' ), 10 ,3 );
+
 		}/* __construct() */
 
 
@@ -423,6 +426,42 @@
 			wp_enqueue_style( 'studiorum-lectio-front-end-styles', trailingslashit( LECTIO_PLUGIN_URL ) . 'includes/assets/css/studiorum-lectio-front-end-styles.css' );
 
 		}/* wp_enqueue_scripts__frontEndStyles() */
+
+
+		/**
+		 * When a student logs in, let's send them to either a redirect_to url or the home page of this site
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $redirect_to URL to redirect to.
+		 * @param string $request URL the user is coming from.
+		 * @param object $user Logged user's data.
+		 * @return string
+		 */
+
+		public function login_redirect__studentDoesNotLogInToBackEnd( $redirect_to, $request, $user )
+		{
+
+
+			if( !$user ){
+				file_put_contents( WP_CONTENT_DIR . '/debug.log', "\n" . '"1": '. print_r( "1", true ), FILE_APPEND );
+				return $redirect_to;
+			}
+
+			if( !isset( $user->roles ) || !is_array( $user->roles ) ){
+				return $redirect_to;
+			}
+
+			if( !in_array( 'studiorum_student', $user->roles ) ){
+				return $redirect_to;
+			}
+
+			// OK, we have a user, it's a student, let's see if we have a redirect_to in the URL
+			$redirectTo = ( isset( $_GET['redirect_to'] ) && $_GET['redirect_to'] != '' && $_GET['redirect_to'] != admin_url() ) ? $_GET['redirect_to'] : home_url();
+
+			return $redirectTo;
+
+		}/* login_redirect__studentDoesNotLogInToBackEnd() */
 
 	}/* class Studiorum_Lectio */
 
