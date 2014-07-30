@@ -34,7 +34,11 @@
 		public function __construct()
 		{
 
+			// Register the post type
 			add_action( 'init', array( $this, 'init__registerPostType' ) );
+
+			// Add the dropdown to be able to filter by author
+			add_action( 'restrict_manage_posts', array( $this, 'restrict_manage_posts__addAuthorFilter' ) );
 
 		}/* __construct() */
 
@@ -103,6 +107,32 @@
 			register_post_type( $this->slug, $args );
 
 		}/* registerAssignmentSubmissionPostType() */
+
+
+		/**
+		 * Add a filter to be able to see posts by a specific author
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $param description
+		 * @return string|int returnDescription
+		 */
+
+		public function restrict_manage_posts__addAuthorFilter()
+		{
+
+			$arguments = array( 
+				'name' => 'author', 
+				'show_option_all' => __( 'All authors', 'studiorum-lectio' )
+			);
+
+			if( isset( $_GET['user'] ) ){
+				$arguments['selected'] = sanitize_text_field( $_GET['user'] );
+			}
+
+			wp_dropdown_users( $arguments );
+
+		}/* restrict_manage_posts__addAuthorFilter() */
 
 	}/* Studiorum_Lectio_Assignment_Submission_Post_Type() */
 
