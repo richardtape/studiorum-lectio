@@ -242,8 +242,9 @@
 			}
 
 			$wp_admin_bar->remove_menu( 'comments' );
-			$wp_admin_bar->remove_menu('new-content');
-			$wp_admin_bar->remove_menu('edit');
+			$wp_admin_bar->remove_menu( 'new-content' );
+			$wp_admin_bar->remove_menu( 'edit' );
+			$wp_admin_bar->remove_menu( 'appearance' );
 
 		}/* wp_before_admin_bar_render__removeAdminBarLinksForStudents() */
 
@@ -444,7 +445,6 @@
 
 
 			if( !$user ){
-				file_put_contents( WP_CONTENT_DIR . '/debug.log', "\n" . '"1": '. print_r( "1", true ), FILE_APPEND );
 				return $redirect_to;
 			}
 
