@@ -200,7 +200,7 @@
 		{
 
 			// First check we're on a page with a valid gForm (set in options)
-			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() ){
+			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() || !is_user_logged_in() ){
 				return $form;
 			}
 
