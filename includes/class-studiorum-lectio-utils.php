@@ -461,4 +461,21 @@
 
 		}/* getSubmissionsCatTaxMeta() */
 
+
+		/**
+		 * Determine if the Gradebook add-on is active
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return bool
+		 */
+
+		public static function gradebookIsActive()
+		{
+
+			return defined( 'STUDIORUM_GRADE_BOOK_DIR' );
+
+		}/* gradebookIsActive() */
+
 	}/* class Studiorum_Lectio_Utils() */
