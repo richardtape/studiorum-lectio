@@ -137,8 +137,8 @@
 				'field_id'		=>	'posts_containing_forms',
 				'section_id'	=>	'lectio_options',
 				'type'			=>	'select',
-				'title'			=>	__( 'Posts Containing Forms', 'studiorum-lectio' ) . '<span class="label-note">' . __( 'Which post(s) or page(s) have you placed a submission form?', 'studiorum-lectio' ) . '</span>',
-				'description' 	=> __( '<img src="http://www.dummyimage.com/400x200" />', 'studiorum-lectio' ),
+				'title'			=>	__( 'Posts/Pages Containing Forms', 'studiorum-lectio' ) . '<span class="label-note">' . __( 'Which post(s) or page(s) have you placed a submission form?', 'studiorum-lectio' ) . '</span>',
+				// 'description' 	=> __( '<img src="http://www.dummyimage.com/400x200" />', 'studiorum-lectio' ),
 				'help'			=>	__( 'Currently we are unable to automatically detect which gravity form(s) you wish to use for submissions - and hence which page you have those on. So, please let us know which page(s) you use for submissions from your students.', 'studiorum-lectio' ),
 				'help_aside'	=>	__( '', 'studiorum-lectio' ),
 				'default'		=>	0,	// the index key of the label array below which yields 'Yellow'.
@@ -146,7 +146,7 @@
 				'label'			=>	$dropdownValues
 			);
 
-			$settingsFields[] = array(
+			/*$settingsFields[] = array(
 				'field_id'		=>	'posts_containing_forms_test',
 				'section_id'	=>	'lectio_options',
 				'type'			=>	'select',
@@ -169,7 +169,7 @@
 				'attributes'	=>	array(
 					'size'	=>	40,
 				),
-			);
+			);*/
 
 			return $settingsFields;
 
