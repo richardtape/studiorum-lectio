@@ -36,7 +36,7 @@
 		{
 
 			// Register our taxonomies
-			add_action( 'init', array( $this, 'init__registerTaxonomy' ), 10 );
+			add_action( 'init', array( $this, 'init__registerTaxonomy' ), 15 );
 
 			// When a new submission category/assignment is made, we look to see if there's any meta to send emails on schedules etc
 			add_action( 'update_option_Studiorum_Lectio_Assignment_Taxonomy_Meta', array( $this, 'update_option__handleSubmissionDeadlines' ), 999, 2 );
@@ -59,7 +59,7 @@
 
 		public function init__registerTaxonomy()
 		{
-
+			
 			$this->registerSubmissionCategoryTaxonomy();
 
 		}/* init__registerTaxonomy() */
@@ -435,17 +435,4 @@
 
 	}/* class Studiorum_Lectio_Assignment_Taxonomy() */
 
-
-
-
-
-
-	// set_current_user runs after after_setup_theme but before init
-	add_action( 'set_current_user', 'set_current__userregisterStudiorumLectioTaxonomies', 5 );
-
-	function set_current__userregisterStudiorumLectioTaxonomies()
-	{
-
-		$Studiorum_Lectio_Assignment_Taxonomy = new Studiorum_Lectio_Assignment_Taxonomy;
-
-	}/* set_current__userregisterStudiorumLectioTaxonomies() */
+	$Studiorum_Lectio_Assignment_Taxonomy = new Studiorum_Lectio_Assignment_Taxonomy;

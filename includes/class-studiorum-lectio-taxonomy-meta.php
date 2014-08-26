@@ -257,12 +257,4 @@
 
 	}/* class Studiorum_Lectio_Assignment_Taxonomy_Meta */
 
-
-	add_action( 'set_current_user', 'set_current_user__registerTaxMeta', 7 );
-
-	function set_current_user__registerTaxMeta()
-	{
-
-		$Studiorum_Lectio_Assignment_Taxonomy_Meta = new Studiorum_Lectio_Assignment_Taxonomy_Meta( 'lectio-submission-category' );
-
-	}/* set_current_user__registerTaxMeta() */
+	$Studiorum_Lectio_Assignment_Taxonomy_Meta = new Studiorum_Lectio_Assignment_Taxonomy_Meta( 'lectio-submission-category' );
