@@ -55,6 +55,9 @@
 			// Some extra styles for warning messages etc.
 			add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_scripts__frontEndStyles' ) );
 
+			// Some styles for th back-end
+			add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts__backEndStyles' ) );
+
 			// When a student logs in, redirect them to either a redirect_to url or the home page, not the back end
 			add_filter( 'login_redirect', array( $this, 'login_redirect__studentDoesNotLogInToBackEnd' ), 10 ,3 );
 
@@ -78,8 +81,14 @@
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-post-type.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-taxonomy-meta.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/class-studiorum-lectio-taxonomies.php' );
-			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/admin/class-studiorum-lectio-educator-dashboard.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/gravity-forms-hooks/class-studiorum-lectio-gravity-forms-hooks.php' );
+
+			if( !is_admin() ){
+				return;
+			}
+			
+			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/admin/class-studiorum-lectio-educator-dashboard.php' );
+			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/admin/class-studiorum-lectio-student-dashboard.php' );
 
 		}/* after_setup_theme__includes() */
 
@@ -313,6 +322,23 @@
 			wp_enqueue_style( 'studiorum-lectio-front-end-styles', trailingslashit( LECTIO_PLUGIN_URL ) . 'includes/assets/css/studiorum-lectio-front-end-styles.css' );
 
 		}/* wp_enqueue_scripts__frontEndStyles() */
+
+
+		/**
+		 * Back-end styles
+		 *
+		 * @since 0.1
+		 *
+		 * @param null
+		 * @return null
+		 */
+
+		public function admin_enqueue_scripts__backEndStyles()
+		{
+
+			wp_enqueue_style( 'studiorum-lectio-back-end-styles', trailingslashit( LECTIO_PLUGIN_URL ) . 'includes/admin/assets/css/studiorum-lectio-admin.css' );
+
+		}/* admin_enqueue_scripts__backEndStyles() */
 
 
 		/**
