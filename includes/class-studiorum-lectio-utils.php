@@ -478,4 +478,44 @@
 
 		}/* gradebookIsActive() */
 
+
+		/**
+		 * Determine whether the passed user ID can see the one-to-one info associated with the passed Post ID
+		 * If the user is the post author, true
+		 * if the user is a teacher, true
+		 * if the user is an admin, true
+		 *
+		 * @since 0.1
+		 *
+		 * @param int $userID The ID of the user to check
+		 * @param int $postID The ID of the post to check
+		 * @return bool
+		 */
+		public static function userCanSeeOneToOne( $userID, $postID )
+		{
+
+			// Admins can
+			if( user_can( $userID, 'manage_options' ) ){
+				return true;
+			}
+
+			// Post author can
+			$postObject 	= get_post( $postID );
+			$postAuthorID 	= $postObject->post_author;
+			
+			if( $postAuthorID == $userID ){
+				return true;
+			}
+
+			// Teachers can
+			$userObject = get_user_by( 'id', $userID );
+			if( Studiorum_Utils::usersRoleIs( 'studiorum_educator', $userObject ) ){
+				return true;
+			}
+
+			// Default to say no
+			return false;
+
+		}/* userCanSeeGrade() */
+
 	}/* class Studiorum_Lectio_Utils() */
