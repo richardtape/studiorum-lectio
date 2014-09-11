@@ -101,7 +101,7 @@
 				'has_archive'			=> true,
 				'hierarchical'			=> false,
 				'menu_position'			=> null,
-				'supports'				=> array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' )
+				'supports'				=> array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments', 'custom-fields' )
 			);
 
 			register_post_type( $this->slug, $args );
