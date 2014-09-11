@@ -48,6 +48,9 @@
 			add_filter( 'gform_pre_render', array( $this, 'gform_pre_render__hideFormIfAlreadySubmitted' ), 10, 2 );
 			add_filter( 'gform_form_tag', array( $this, 'gform_form_tag__showMessageIfAlreadySubmitted' ), 10, 2 );
 
+			// If custom fields in gForm, we need to output them in the template
+			add_filter( 'the_content', array( $this, 'the_content__addgFormCustomFields' ), 99 );
+
 		}/* __construct() */
 
 		/**
@@ -296,6 +299,119 @@
 			return $form_tag;
 
 		}/* gform_form_tag__showMessageIfAlreadySubmitted() */
+
+
+		/**
+		 * If the submission form contains custom fields, it automagically creates the custom meta in the posts, but we don't show it
+		 * on the front end. Let's sort that.
+		 *
+		 * Basically, gForms creates post meta with a key of _gform-form-id which tells us which form created this post. We'll look
+		 * if we have that (only if we're on a submission, of course). We'll then grab the post meta for this post and look for
+		 * they keys in the gform itself and look at the title and type of the inputs with those keys
+		 * 
+		 *
+		 * @since 0.1
+		 *
+		 * @param string $content The post's content
+		 * @return string The edited content with custom fields if appropriate
+		 */
+
+		public function the_content__addgFormCustomFields( $content )
+		{
+
+			// Basic checks that we're on a post, and it's for a submission
+			global $post;
+
+			if( !$post || !is_object( $post ) ){
+				return $content;
+			}
+
+			if( !isset( $post->post_type ) || $post->post_type != Studiorum_Lectio_Utils::$postTypeSlug ){
+				return $content;
+			}
+
+			// OK now let's see which form created this post
+			$postID = $post->ID;
+
+			$formID = get_post_meta( $postID, '_gform-form-id', true );
+
+			if( !$formID || $formID == '' ){
+				return $content;
+			}
+
+			if( !class_exists( 'RGFormsModel' ) ){
+				return $content;
+			}
+
+			// OK now let's grab the fields for that form and determine 
+			$form = RGFormsModel::get_form_meta( $formID );
+
+			if( !$form || $form === false ){
+				return $content;
+			}
+
+			$formFields = ( isset( $form['fields'] ) ) ? $form['fields'] : false;
+
+			if( $formFields === false || !is_array( $formFields ) || empty( $formFields ) ){
+				return $content;
+			}
+
+			// Let's get all of our custom field...fields
+			$customFieldFields = array();
+
+			foreach( $formFields as $key => $fieldAtts )
+			{
+				
+				if( !isset( $fieldAtts['type'] ) || $fieldAtts['type'] != 'post_custom_field' ){
+					continue;
+				}
+
+				$customFieldFields[] = array( 
+					'meta_key' 		=> $fieldAtts['postCustomFieldName'],
+					'meta_title' 	=> $fieldAtts['label'],
+					'field_id' 		=> $fieldAtts['id'],
+					'input_type' 	=> $fieldAtts['inputType']
+				);
+
+			}
+			
+			if( empty( $customFieldFields ) ){
+				return $content;
+			}
+
+			/*
+				We now have an array, similar to
+				Array(
+					[0] => Array(
+						[meta_key] => gf_cf_single_text
+						[meta_title] => PostCF: Single Text
+						[field_id] => 8
+						[input_type] => text
+					)
+
+					[1] => Array(
+						[meta_key] => gf_cf_paragraph_text
+						[meta_title] => PostCF Paragraph Text
+						[field_id] => 9
+						[input_type] => textarea
+					)
+				)
+			*/
+
+			// We need to add each of these to the end of the content
+			$customFieldsContentTemplate = apply_filters( 'studiorum_lectio_custom_fields_content_template_path', Studiorum_Utils::locateTemplateInPlugin( LECTIO_PLUGIN_DIR, 'includes/templates/custom-fields-template.php' ), $customFieldFields, $content, $formID );
+
+			$extraContent = '';
+
+			if( !empty( $customFieldsContentTemplate ) ){
+				$extraContent = Studiorum_Utils::fetchTemplatePart( $customFieldsContentTemplate, $customFieldFields );
+			}
+
+			$content = $content . $extraContent;
+
+			return $content;
+
+		}/* the_content__addgFormCustomFields() */
 
 	}/* class Studiorum_Lectio_Gravity_Forms_Hooks */
 

@@ -12,6 +12,10 @@
 
 	<div class="submissions-container">
 
+	<p>
+		<?php _e( 'Here is a list of your assignment submissions and grades' ); ?>
+	</p>
+
 		<ul>
 			<?php foreach( $postData as $key => $nameAndPosts ) : ?>
 				<li>
