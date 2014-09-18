@@ -61,6 +61,9 @@
 			// When a student logs in, redirect them to either a redirect_to url or the home page, not the back end
 			add_filter( 'login_redirect', array( $this, 'login_redirect__studentDoesNotLogInToBackEnd' ), 10 ,3 );
 
+			// Register ourself as an addon
+			add_filter( 'studiorum_modules', array( $this, 'studiorum_modules__registerAsModule' ) );
+
 		}/* __construct() */
 
 
@@ -374,6 +377,40 @@
 			return $redirectTo;
 
 		}/* login_redirect__studentDoesNotLogInToBackEnd() */
+
+
+		/**
+		 * Register ourself as a studiorum addon, so it's available in the main studiorum page
+		 *
+		 * @since 0.1
+		 *
+		 * @param array $modules Currently registered modules
+		 * @return array $modules modified list of modules
+		 */
+
+		public function studiorum_modules__registerAsModule( $modules )
+		{
+
+			if( !$modules || !is_array( $modules ) ){
+				$modules = array();
+			}
+
+			$modules['studiorum-lectio'] = array(
+				'id' 				=> 'lectio',
+				'plugin_slug'		=> 'studiorum-lectio',
+				'title' 			=> __( 'Lectio', 'studiorum' ),
+				'icon' 				=> 'clipboard', // dashicons-#
+				'excerpt' 			=> __( 'Add the ability for students to submit rich content to your website all from the front-end.', 'studiorum' ),
+				'image' 			=> 'http://dummyimage.com/310/162',
+				'link' 				=> 'http://code.ubc.ca/studiorum/lectio',
+				'content' 			=> __( '<p>By levaraging Gravity Forms (another WordPress plugin), Lectio gives you a way to create an assignment submission form giving your students the capabiity to submit assignments with a rich text editor all from the front-end of your site.</p><p>When a student makes a submission they are taken to a copy of that submission which only they (and you) can see. If you enable the Studiorum User Groups addon, then students in the same group as the one who made the submission can also see and comment on the submission.</p><p>Studiorum also allows you to limit the number of times each student can submit an assignment.</p><p>If you enable the Studiorum Side Comments add-on then you and the student are able to make comments on a paragraph-by-paragraph basis.</p>', 'studiorum' ),
+				'content_sidebar' 	=> 'http://dummyimage.com/300x150',
+				'date'				=> '2014-08-01'
+			);
+
+			return $modules;
+
+		}/* studiorum_modules__registerAsModule() */
 
 	}/* class Studiorum_Lectio */
 
