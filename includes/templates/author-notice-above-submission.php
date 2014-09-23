@@ -13,7 +13,7 @@
 
 ?>
 
-	<div class="author-submission-notice">
+	<div class="notice dark author-submission-notice">
 
 		<p><?php echo esc_html( $message ); ?></p>
 

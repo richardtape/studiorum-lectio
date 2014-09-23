@@ -48,11 +48,17 @@
 			add_filter( 'gform_pre_render', array( $this, 'gform_pre_render__hideFormIfAlreadySubmitted' ), 10, 2 );
 			add_filter( 'gform_form_tag', array( $this, 'gform_form_tag__showMessageIfAlreadySubmitted' ), 10, 2 );
 
+			// Remove the form if the user isn't attached the current blog
+			add_filter( 'gform_pre_render', array( $this, 'gform_pre_render__hideFormIfUserShouldNotSeeIt' ), 10, 2 );
+
 			// If custom fields in gForm, we need to output them in the template
 			add_filter( 'the_content', array( $this, 'the_content__addgFormCustomFields' ), 99 );
 
 			// For the author, add a note at the top saying this is your submission (kind of a 'we received it')
 			add_filter( 'the_content', array( $this, 'the_content__addNoteForAuthor' ), 98 );
+
+			// Ensure the currently logged in user is a 'member' of the current site (i.e NOT just logged in)
+			add_filter( 'the_content', array( $this, 'the_content__studentOnlySeesFormIfAttachedToSite' ), 1000 );
 
 		}/* __construct() */
 
@@ -197,7 +203,7 @@
 		 *
 		 * @since 0.1
 		 *
-		 * @param object $form The form object
+		 * @param array $form The form object
 		 * @param bool $ajax The string containing the <form> tag
 		 * @return object $form The form
 		 */
@@ -246,6 +252,58 @@
 			return $form;
 
 		}/* gform_pre_render__hideFormIfAlreadySubmitted() */
+
+
+		/**
+		 * Hide the form if the user shouldn't be able to see it
+		 *
+		 * @author Richard Tape <@richardtape>
+		 * @since 1.0
+		 * @param array $form The form object
+		 * @param bool $ajax The string containing the <form> tag
+		 * @return object $form The form
+		 */
+		
+		public function gform_pre_render__hideFormIfUserShouldNotSeeIt( $form, $ajax )
+		{
+
+			// First check we're on a page with a valid gForm (set in options)
+			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() || !is_user_logged_in() ){
+				return $form;
+			}
+
+			// OK, we're on a page which contains a gForm for assignment submissions. Let's determine if the current user already has a submission
+			$currentUserID 				= get_current_user_ID();
+			$userIDToFetchSubmissions 	= apply_filters( 'studiorum_lectio_already_submitted_user_submissions_id', $currentUserID, $form );
+
+			// See which submission category this is for
+			$formFields = $form['fields'];
+
+			$submissionCatTermID = Studiorum_Lectio_Utils::getTermIDFromFormFields( $formFields );
+
+			if( !$submissionCatTermID ){
+				return $form;
+			}
+
+			// Get the user and current blog ID so we can test if the former is a member of the latter
+			$userID = get_current_user_ID();
+			$blogID = get_current_blog_id();
+
+			if( is_user_member_of_blog( $userID, $blogID ) ){
+				return $form;
+			}
+
+			// So, the user has already hit the max number of submissions, empty the form
+			$form['fields'] = array();
+
+			// We also want to remove the submit button, too.
+			$formID = $form['id'];
+			add_filter( 'gform_submit_button_' . $formID, '__return_empty_string' );
+
+			return $form;
+
+		}/* gform_pre_render__hideFormIfUserShouldNotSeeIt() */
+		
 
 
 		/**
@@ -464,6 +522,61 @@
 
 		}/* the_content__addNoteForAuthor() */
 		
+
+		/**
+		 * Prevent students who are logged in, but not attached to the current site, from being
+		 * able to see/submit the submissions forms
+		 *
+		 * @author Richard Tape <@richardtape>
+		 * @since 1.0
+		 * @param (string) $content - the current content
+		 * @return (string) $content - modified content if necessary
+		 */
+		
+		public function the_content__studentOnlySeesFormIfAttachedToSite( $content )
+		{
+
+			$isAssignmentEntryPage = Studiorum_Lectio_Utils::isAssignmentEntryPage();
+
+			if( !$isAssignmentEntryPage ){
+				return $content;
+			}
+
+			// Even though gForms handles whether a user is logged in or not, we need to get the user details
+			if( !is_user_logged_in() ){
+				return $content;
+			}
+
+			// Have a switch for this functionality
+			$nonBlogMembersCanNotSubmitForms = apply_filters( 'studiorum_lectio_non_blog_members_can_not_submit_forms', true, $content );
+
+			if( !$nonBlogMembersCanNotSubmitForms ){
+				return $content;
+			}
+
+			// Get the user and current blog ID so we can test if the former is a member of the latter
+			$userID = get_current_user_ID();
+			$blogID = get_current_blog_id();
+
+			if( is_user_member_of_blog( $userID, $blogID ) ){
+				return $content;
+			}
+
+			// We need to add each of these to the end of the content
+			$userNotMemberOfBlogNote = apply_filters( 'studiorum_lectio_user_not_member_of_blog_content_template_path', Studiorum_Utils::locateTemplateInPlugin( LECTIO_PLUGIN_DIR, 'includes/templates/user-not-member-of-blog-note.php' ), $content );
+
+			$extraContent = '';
+
+			if( !empty( $userNotMemberOfBlogNote ) ){
+				$extraContent = Studiorum_Utils::fetchTemplatePart( $userNotMemberOfBlogNote );
+			}
+
+			// We completely overwrite the form so they don't see it
+			$content = $extraContent;
+
+			return $content;
+
+		}/* the_content__studentOnlySeesFormIfAttachedToSite() */
 
 	}/* class Studiorum_Lectio_Gravity_Forms_Hooks */
 
