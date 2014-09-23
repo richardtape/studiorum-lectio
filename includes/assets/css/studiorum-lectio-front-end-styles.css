@@ -127,3 +127,18 @@ div.mce-toolbar-grp > div{
 .wp-editor-tools{
 	margin-bottom: 15px;
 }
+
+/* Front end author notice above content */
+.author-submission-notice{
+	padding: 1em;
+	margin: 1em 0;
+	background: RGB(0, 33, 69);
+}
+
+	.author-submission-notice p{
+		color: white;
+	}
+
+	.author-submission-notice p:last-of-type{
+		margin-bottom: 0;
+	}

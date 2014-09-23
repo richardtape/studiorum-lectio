@@ -75,7 +75,8 @@
 			$this->addMaxSubmissionsFields();
 
 			// Also add fields for deadline of submissions (if WP_CRON is enabled)
-			$this->addDeadlineFields();
+			// @todo: Fix this as it causes a JS error on defaul tags and category pages
+			// $this->addDeadlineFields();
 
 		}/* addLectioSettingFields() */
 

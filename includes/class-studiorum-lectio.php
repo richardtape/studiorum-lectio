@@ -34,16 +34,16 @@
 			// Load our necessary post types and taxonomies
 			add_action( 'after_setup_theme', array( $this, 'after_setup_theme__includes' ), 1 );
 
-			// We need for students to be able to edit the page on which the upload form is on - so they can add media to the WYSIWYG
+			// // We need for students to be able to edit the page on which the upload form is on - so they can add media to the WYSIWYG
 			add_filter( 'user_has_cap', array( $this, 'user_has_cap__giveStudentAbilityToEditFormPage' ), 100, 3 );
 
 			add_filter( 'user_has_cap', array( $this, 'user_has_cap__alterSubmissionsVisibility' ), 100, 3 );
 
-			// Remove 'private' and 'protected' from titles
+			// // Remove 'private' and 'protected' from titles
 			add_filter( 'private_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
 			add_filter( 'protected_title_format', array( $this, 'title_format__removePrivatePublicFromTitle' ) );
 
-			// Prevent Edit/New links in admin bar for student
+			// // Prevent Edit/New links in admin bar for student
 			add_action( 'wp_before_admin_bar_render', array( $this, 'wp_before_admin_bar_render__removeAdminBarLinksForStudents' ) );
 
 			// Add the editor styles, hopefully making it easier for a user to create content as it will be produced
@@ -318,7 +318,7 @@
 		{
 
 			// First check we're on a page with a valid gForm (set in options)
-			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() ){
+			if( !Studiorum_Lectio_Utils::isAssignmentEntryPage() && !is_singular( Studiorum_Lectio_Utils::$postTypeSlug ) ){
 				return false;
 			}
 

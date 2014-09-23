@@ -51,6 +51,9 @@
 			// If custom fields in gForm, we need to output them in the template
 			add_filter( 'the_content', array( $this, 'the_content__addgFormCustomFields' ), 99 );
 
+			// For the author, add a note at the top saying this is your submission (kind of a 'we received it')
+			add_filter( 'the_content', array( $this, 'the_content__addNoteForAuthor' ), 98 );
+
 		}/* __construct() */
 
 		/**
@@ -412,6 +415,55 @@
 			return $content;
 
 		}/* the_content__addgFormCustomFields() */
+
+
+		/**
+		 * Add note for author when viewing their own submission to see 'we got this, this is yours'
+		 *
+		 * @author Richard Tape <@richardtape>
+		 * @since 1.0
+		 * @param string $content - the submission content
+		 * @return string $content - modified content with notice at top
+		 */
+		
+		public function the_content__addNoteForAuthor( $content )
+		{
+
+			// Basic checks that we're on a post, and it's for a submission
+			global $post;
+
+			if( !$post || !is_object( $post ) ){
+				return $content;
+			}
+
+			if( !isset( $post->post_type ) || $post->post_type != Studiorum_Lectio_Utils::$postTypeSlug ){
+				return $content;
+			}
+
+			// OK now let's see which form created this post
+			$postID 		= $post->ID;
+			$authorID 		= $post->post_author;
+			$currentUserID 	= get_current_user_ID();
+
+			if( $authorID != $currentUserID ){
+				return $content;
+			}
+
+			// We need to add each of these to the end of the content
+			$authorNoteContentTemplate = apply_filters( 'studiorum_lectio_author_note_content_template_path', Studiorum_Utils::locateTemplateInPlugin( LECTIO_PLUGIN_DIR, 'includes/templates/author-notice-above-submission.php' ), $content );
+
+			$extraContent = '';
+
+			if( !empty( $authorNoteContentTemplate ) ){
+				$extraContent = Studiorum_Utils::fetchTemplatePart( $authorNoteContentTemplate );
+			}
+
+			$content = $extraContent . $content;
+
+			return $content;
+
+		}/* the_content__addNoteForAuthor() */
+		
 
 	}/* class Studiorum_Lectio_Gravity_Forms_Hooks */
 
