@@ -129,16 +129,19 @@ div.mce-toolbar-grp > div{
 }
 
 /* Front end author notice above content */
-.author-submission-notice{
+.notice{
 	padding: 1em;
 	margin: 1em 0;
-	background: RGB(0, 33, 69);
 }
 
-	.author-submission-notice p{
+	.notice.dark{
+		background: RGB(0, 33, 69);
+	}
+
+	.notice.dark p{
 		color: white;
 	}
 
-	.author-submission-notice p:last-of-type{
+	.notice p:last-of-type{
 		margin-bottom: 0;
 	}
