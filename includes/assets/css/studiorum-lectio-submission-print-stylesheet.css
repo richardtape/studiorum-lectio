@@ -1,0 +1,171 @@
+/* 
+	The below is for when a person is *viewing* the print page, before they press print
+	It will also set very basic styles for the print stylehseet unless it overirdes them
+	i.e. hiding the form stuff
+*/
+
+/* Quick CSS Reset */
+@import url('http://fonts.googleapis.com/css?family=Merriweather:400,700');
+a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,caption,center,cite,code,dd,del,details,dfn,div,dl,dt,em,embed,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hgroup,html,i,iframe,img,ins,kbd,label,legend,li,mark,menu,nav,object,ol,output,p,pre,q,ruby,s,samp,section,small,span,strike,strong,sub,summary,sup,table,tbody,td,tfoot,th,thead,time,tr,tt,u,ul,var,video{margin:0;padding:0;border:0;font:inherit;vertical-align:baseline}article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:after,blockquote:before,q:after,q:before{content:'';content:none}table{border-collapse:collapse;border-spacing:0}
+
+body {
+	color: #000;
+	background: #fff;
+}
+
+body {
+	width: 90%;
+	margin: 0;
+	padding: 5%;
+
+	font-size:100%; 
+	line-height:1.7;
+ 	font-family: 'Merriweather', Georgia, 'Times New Roman', Times, serif;
+}
+
+h1 {
+  font-size: 2.747em;
+}
+h2 {
+  font-size: 1.874em;
+}
+h3 {
+  font-size:1.229em;
+}
+
+img {
+	max-width: 100% !important;
+}
+
+p{
+	margin-top: 1em;
+}
+
+/* Side comments */
+.side-comments-after-p{
+	background: rgb(240,240,240);
+	border: 1px solid rgb(240,240,240);
+	padding: 2%;
+	margin-bottom: 1em;
+}
+
+.side-comments-after-p ul:before{
+	content:"Related comments: ";
+}
+
+	.side-comments-after-p p,
+	.side-comments-after-p ul,
+	.side-comments-after-p li,
+	.side-comments-after-p a{
+		font-size: 90%;
+	}
+
+	.side-comments-after-p ul{
+		list-style-type: disc;
+		list-style-position: inside;
+	}
+
+/* Linear comments section */
+.linear-comments{
+	padding: 2%;
+	border: 1px solid rgb(240,240,240);
+}
+
+.content-and-comments:after{
+	content:"Comments for the whole submission: ";
+}
+
+.comment-meta,
+.comment-wrap .avatar,
+#comments-number{
+	display: none;
+}
+
+.children{
+	padding-left: 2%;
+}
+
+ul, img {
+	
+}
+
+a {
+	color: #000;
+	text-decoration: none;
+}
+
+a[href^=http]:after {
+	content:" <" attr(href) "> ";
+}
+
+a[href^="#"]:after {
+	content: "";
+}
+
+form, #respond{
+	display: none;
+}
+
+
+
+
+/* 
+	The below is for when a person is *printing* the print page
+*/
+
+
+@media print{
+
+	* { background: transparent !important; color: black !important; text-shadow: none !important; filter:none !important; -ms-filter: none !important; }
+
+	body {
+		color: #000;
+		background: #fff;
+	}
+
+	body, article {
+		width: 100%;
+		margin: 0;
+		padding: 0;
+	}
+
+	@page {
+		margin: 2cm;
+	}
+
+	h2, h3 {
+		page-break-after: avoid;
+	}
+
+	img {
+		max-width: 100% !important;
+	}
+
+	ul, img {
+		page-break-inside: avoid;
+	}
+
+	a {
+		font-weight: bolder;
+		text-decoration: none;
+	}
+
+	a[href^=http]:after {
+		content:" <" attr(href) "> ";
+	}
+
+	article a[href^="#"]:after {
+		content: "";
+	}
+
+}
+
+
+@media print and (color) {
+	
+	* {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+}

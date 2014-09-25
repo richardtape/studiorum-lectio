@@ -64,6 +64,9 @@
 			// Register ourself as an addon
 			add_filter( 'studiorum_modules', array( $this, 'studiorum_modules__registerAsModule' ) );
 
+			// Add a print stylesheet for the new endpoint /print/
+			add_action( 'template_redirect', array( $this, 'template_redirect__addPrintLayout' ) );
+
 		}/* __construct() */
 
 
@@ -411,6 +414,114 @@
 			return $modules;
 
 		}/* studiorum_modules__registerAsModule() */
+
+
+		/**
+		 * Add the print layout if the studiorum-print-me plugin is active and some hits <permalink>/print/
+		 *
+		 * @author Richard Tape <@richardtape>
+		 * @since 1.0
+		 * @param null
+		 * @return null
+		 */
+		
+		public function template_redirect__addPrintLayout()
+		{
+
+			global $wp_query;
+
+			// Ensure the studiorum print plugin is up and running
+			if( !defined( 'STUDIORUM_PRINT_PLUGIN_DIR' ) ){
+				return;
+			}
+
+			// if this is not a request for print or a singular lectio submission, then bail
+			if( !isset( $wp_query->query_vars['print'] ) || !is_singular( Studiorum_Lectio_Utils::$postTypeSlug ) ){
+				return;
+			}
+
+			// OK, let's get our data set up about this post
+			global $post;
+			$postID = $post->ID;
+
+			$allComments = get_comments( array( 'post_id' => $postID, 'type' => '' ) );
+
+			$linearComments = array();
+
+			foreach( $allComments as $key => $commentObject ) {
+				if( !$commentObject->comment_type ){
+					$linearComments[] = $commentObject;
+				}
+			}
+
+			$sideComments = CTLT_WP_Side_Comments::getPostCommentData( $postID );
+
+			$postContent = apply_filters( 'the_content', $post->post_content );
+
+			preg_match_all( "/<p[^>]*>(.*)<\/p>/", $postContent, $contentBreakdown );
+
+			// Also, it will contain any other content that is added in via the_content filter, and we only want
+			// <p> tags that have a class of 'commentable-section'
+			$onlyCommentableSectionContent = array();
+
+			$justContent = array();
+
+			foreach( $contentBreakdown[0] as $cbKey => $html )
+			{
+				
+				// if we don't have 'commentable-section' and 'data-section-id' then remove
+				if( ( strpos( $html, 'commentable-section' ) === false ) || ( strpos( $html, 'data-section-id' ) === false ) ){
+					continue;
+				}
+
+				$justContent[$cbKey] = $contentBreakdown[1][$cbKey];
+
+			}
+
+			$contentWithSideComments = array();
+
+			// OK now we have an array of strings (starting at [1]). We need to add the side comments
+			foreach( $justContent as $pKey => $pText )
+			{
+				
+				if( !array_key_exists( $pKey, $sideComments ) ){
+					$contentWithSideComments[$pKey] = $pText;
+					continue;
+				}
+
+				// OK, so this paragraph has side comments
+				// Let's add a div for the side comments
+				$toAdd = '';
+				$toAdd .= '<p>' . $pText . '</p>' . '<div class="side-comments-after-p"><ul>';
+				
+				// Grab the side comments, then loop over them and add each as a list item
+				$sideCommentsForThisP = array_reverse( $sideComments[$pKey] );
+				foreach( $sideCommentsForThisP as $sidecommentKey => $sideCommentArray )
+				{
+
+					$toAdd .= '<li>';
+						$toAdd .= $sideCommentArray['comment'];
+					$toAdd .= '</li>';
+
+				}
+
+				// Close the 'side-comments-after-p'
+				$toAdd .= '</ul></div>';
+
+				$contentWithSideComments[$pKey] = $toAdd;
+
+			}
+
+			$printPageTemplate = apply_filters( 'studiorum_lectio_print_template_path', Studiorum_Utils::locateTemplateInPlugin( LECTIO_PLUGIN_DIR, 'includes/templates/lectio-print-stylesheet.php' ) );
+			
+			if( !empty( $printPageTemplate ) ){
+				include( $printPageTemplate );
+			}
+
+			exit;
+
+		}/* template_redirect__addPrintLayout() */
+		
 
 	}/* class Studiorum_Lectio */
 
