@@ -499,6 +499,10 @@
 				return true;
 			}
 
+			if( is_super_admin( $userID ) ){
+				return true;
+			}
+
 			// Post author can
 			$postObject 	= get_post( $postID );
 			$postAuthorID 	= $postObject->post_author;
