@@ -60,6 +60,9 @@
 			// Ensure the currently logged in user is a 'member' of the current site (i.e NOT just logged in)
 			add_filter( 'the_content', array( $this, 'the_content__studentOnlySeesFormIfAttachedToSite' ), 1000 );
 
+			// Prevent akismet on these forms
+			add_filter( 'gform_akismet_enabled', '__return_false' );
+
 		}/* __construct() */
 
 		/**
