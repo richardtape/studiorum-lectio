@@ -12,9 +12,9 @@
 
 	<div class="submissions-container">
 
-	<p>
+	<h2>
 		<?php echo $text; ?>
-	</p>
+	</h2>
 
 		<ul>
 			<?php foreach( $data as $indiv => $nameAndPosts ) : ?>
