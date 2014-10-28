@@ -13,7 +13,7 @@
 	<div class="submissions-container">
 
 	<p>
-		<?php _e( 'Here is a list of your assignment submissions and grades' ); ?>
+		<?php _e( 'Here is a list of your assignment submissions' ); ?>
 	</p>
 
 		<ul>
