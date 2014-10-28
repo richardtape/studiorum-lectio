@@ -138,7 +138,8 @@ div.mce-toolbar-grp > div{
 		background: RGB(0, 33, 69);
 	}
 
-	.notice.dark p{
+	.notice.dark p,
+	.notice.dark a{
 		color: white;
 	}
 
