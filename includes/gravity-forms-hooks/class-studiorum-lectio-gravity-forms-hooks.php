@@ -224,7 +224,7 @@
 			$userIDToFetchSubmissions 	= apply_filters( 'studiorum_lectio_already_submitted_user_submissions_id', $currentUserID, $form );
 
 			// See which submission category this is for
-			$formFields = $form['fields'];
+			$formFields = ( isset( $form['fields'] ) ) ? $form['fields'] : array();
 
 			$submissionCatTermID = Studiorum_Lectio_Utils::getTermIDFromFormFields( $formFields );
 
@@ -280,7 +280,7 @@
 			$userIDToFetchSubmissions 	= apply_filters( 'studiorum_lectio_already_submitted_user_submissions_id', $currentUserID, $form );
 
 			// See which submission category this is for
-			$formFields = $form['fields'];
+			$formFields = ( isset( $form['fields'] ) ) ? $form['fields'] : array( 'id' => null, 'fields' => array() );
 
 			$submissionCatTermID = Studiorum_Lectio_Utils::getTermIDFromFormFields( $formFields );
 
