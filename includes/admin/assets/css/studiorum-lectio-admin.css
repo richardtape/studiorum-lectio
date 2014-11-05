@@ -49,3 +49,41 @@
 		font-style: italic;
 		margin-bottom: 5px;
 	}
+/** Adding distiction between personal and group submissions **/
+.submissions-container .individual-submission span {
+	font-style: italic;
+	border-bottom: 1px solid #222;
+}
+.submissions-container .individual-submission:before, .submissions-container .group-submission:before, .submissions-container > ul h2:before {
+	display: inline-block;
+	width: 36px;
+	height: 36px;
+	font-size: 25px;
+	line-height: 1.5;
+	font-family: dashicons;
+	text-decoration: inherit;
+	font-weight: 400;
+	font-style: normal;
+	text-align: center;
+	vertical-align: middle;
+	background-color: #0074a2;
+	-webkit-transition: color .1s ease-in 0;
+	transition: color .1s ease-in 0;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	border-radius: 500px;
+	color: #fff;
+}
+
+.submissions-container > ul h2:before {
+	content: "\f123";
+	color: #bbb;
+	background: none;
+}
+
+.submissions-container .individual-submission:before {
+	content: "\f110";
+}
+.submissions-container .group-submission:before {
+	content: "\f307";
+}

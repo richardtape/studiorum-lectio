@@ -181,7 +181,7 @@
 			}
 
 			// Add the dashboard widget
-			wp_add_dashboard_widget( 'studiorum_lectio_student_widget_discussions', 'Discussions', array( $this, 'dashboard_widget_output__lectioStudentDiscussions' ) );
+			wp_add_dashboard_widget( 'studiorum_lectio_student_widget_discussions', 'Submissions and Discussions', array( $this, 'dashboard_widget_output__lectioStudentDiscussions' ) );
 
 			// Put our widget at the top of the pile
 			// Globalize the metaboxes array, this holds all the widgets for wp-admin
@@ -307,6 +307,10 @@
 			if( empty( $postData ) ){
 				return;
 			}
+
+			/* Class added to distingush between individual and group */
+
+			$class = '';
 			
 			$text = '';
 
@@ -317,13 +321,17 @@
 
 
 					case 'group_submissions':
+
+						$class ="group-submission";
+
 						$text = __( 'Here are submissions made by your group', 'studiorum-lectio' );
 						break;
 
 					case 'current_user_submissions':
 					default:
-						
-						$text = __( 'Here are your submissions', 'studiorum-lectio' );
+						$class ="individual-submission";
+
+						$text = __( 'Here are <span>your</span> submissions', 'studiorum-lectio' );
 
 						break;
 

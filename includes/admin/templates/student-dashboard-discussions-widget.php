@@ -12,7 +12,7 @@
 
 	<div class="submissions-container">
 
-	<h2>
+	<h2 class="<?php echo $class; ?>">
 		<?php echo $text; ?>
 	</h2>
 
