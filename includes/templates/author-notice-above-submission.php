@@ -25,6 +25,6 @@
 
 	<div class="notice dark author-submission-notice">
 
-		<p><?php echo wp_kses( $message ); ?></p>
+		<p><?php echo wp_kses( $message, $allowedHTML ); ?></p>
 
 	</div><!-- .author-submission-notice -->

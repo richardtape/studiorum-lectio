@@ -456,6 +456,10 @@
 
 			$sideComments = CTLT_WP_Side_Comments::getPostCommentData( $postID );
 
+			if( !is_array( $sideComments ) ){
+				$sideComments = array();
+			}
+
 			$postContent = apply_filters( 'the_content', $post->post_content );
 
 			preg_match_all( "/<p[^>]*>(.*)<\/p>/", $postContent, $contentBreakdown );
@@ -483,7 +487,7 @@
 			// OK now we have an array of strings (starting at [1]). We need to add the side comments
 			foreach( $justContent as $pKey => $pText )
 			{
-				
+
 				if( !array_key_exists( $pKey, $sideComments ) ){
 					$contentWithSideComments[$pKey] = $pText;
 					continue;
