@@ -2,7 +2,7 @@
 	/*
 	 * Plugin Name: Studiorum Lectio
 	 * Description: Lectio is an add-on for Studiorum which adds a lesson management solution for WordPress
-	 * Version:     0.1.1
+	 * Version:     0.1.2
 	 * Plugin URI:  #
 	 * Author:      UBC, CTLT, Richard Tape
 	 * Author URI:  http://ubc.ca/
