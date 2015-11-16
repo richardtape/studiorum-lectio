@@ -489,7 +489,7 @@
 			{
 
 				if( !array_key_exists( $pKey, $sideComments ) ){
-					$contentWithSideComments[$pKey] = $pText;
+					$contentWithSideComments[$pKey] = '<p>' . $pText . '</p>';
 					continue;
 				}
 
