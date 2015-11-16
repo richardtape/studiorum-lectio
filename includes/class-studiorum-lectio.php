@@ -1,10 +1,10 @@
-<?php 
+<?php
 
 	/**
 	 * An add-on for Studiorum
 	 *
 	 * @package     Lectio
-	 * @subpackage  
+	 * @subpackage
 	 * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
 	 * @since       0.1.0
 	 */
@@ -92,7 +92,7 @@
 			if( !is_admin() ){
 				return;
 			}
-			
+
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/admin/class-studiorum-lectio-educator-dashboard.php' );
 			require_once( trailingslashit( LECTIO_PLUGIN_DIR ) . 'includes/admin/class-studiorum-lectio-student-dashboard.php' );
 
@@ -424,7 +424,7 @@
 		 * @param null
 		 * @return null
 		 */
-		
+
 		public function template_redirect__addPrintLayout()
 		{
 
@@ -472,7 +472,7 @@
 
 			foreach( $contentBreakdown[0] as $cbKey => $html )
 			{
-				
+
 				// if we don't have 'commentable-section' and 'data-section-id' then remove
 				if( ( strpos( $html, 'commentable-section' ) === false ) || ( strpos( $html, 'data-section-id' ) === false ) ){
 					continue;
@@ -517,7 +517,7 @@
 			}
 
 			$printPageTemplate = apply_filters( 'studiorum_lectio_print_template_path', Studiorum_Utils::locateTemplateInPlugin( LECTIO_PLUGIN_DIR, 'includes/templates/lectio-print-stylesheet.php' ) );
-			
+
 			if( !empty( $printPageTemplate ) ){
 				include( $printPageTemplate );
 			}
@@ -525,7 +525,7 @@
 			exit;
 
 		}/* template_redirect__addPrintLayout() */
-		
+
 
 	}/* class Studiorum_Lectio */
 
