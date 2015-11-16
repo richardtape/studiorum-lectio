@@ -497,14 +497,14 @@
 				// Let's add a div for the side comments
 				$toAdd = '';
 				$toAdd .= '<p>' . $pText . '</p>' . '<div class="side-comments-after-p"><ul>';
-				
+
 				// Grab the side comments, then loop over them and add each as a list item
 				$sideCommentsForThisP = array_reverse( $sideComments[$pKey] );
 				foreach( $sideCommentsForThisP as $sidecommentKey => $sideCommentArray )
 				{
 
 					$toAdd .= '<li>';
-						$toAdd .= $sideCommentArray['comment'];
+						$toAdd .= $sideCommentArray['authorName'] . ': ' . $sideCommentArray['comment'];
 					$toAdd .= '</li>';
 
 				}
